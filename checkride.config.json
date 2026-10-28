@@ -1,0 +1,30 @@
+{
+  "$schema": "https://raw.githubusercontent.com/robmclarty/checkride/v0.19.0/schema/checkride.config.schema.json",
+  "checks": {
+    "types": "tsc",
+    "lint": "oxlint",
+    "struct": "ast-grep",
+    "dead": "fallow",
+    "test": "vitest",
+    "docs": "markdownlint-cli2",
+    "links": "links",
+    "spell": "cspell",
+    "typecheck-tests": {
+      "command": "pnpm",
+      "args": [
+        "exec",
+        "tsc",
+        "-p",
+        "tsconfig.test.json"
+      ],
+      "description": "Type-check the tests outside src/",
+      "note": "tsconfig.json covers src/ alone, and vitest runs a test without type-checking it, so this is what type-checks test/."
+    },
+    "rule-tests": {
+      "command": "pnpm",
+      "args": ["exec", "ast-grep", "test"],
+      "description": "ast-grep rule fixtures and snapshots",
+      "note": "Each door rule in rules/ has a fixture in rule-tests/ proving it fires; record snapshots with `pnpm exec ast-grep test -U`. Fixtures can't see paths, so test/integration/layout.test.ts checks where each door and ring applies by scanning a real tree."
+    }
+  }
+}

@@ -1,0 +1,17 @@
+id: subprocess-only-in-keyframes
+valid:
+  - |
+    import { readFileSync } from 'node:fs'
+  - |
+    const name = 'node:child_process'
+  - |
+    log('child_process')
+invalid:
+  - |
+    import { spawn } from 'node:child_process'
+  - |
+    import { execFileSync } from 'child_process'
+  - |
+    export { spawnSync } from 'node:child_process'
+  - |
+    const cp = await import('node:child_process')

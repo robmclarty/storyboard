@@ -1,0 +1,41 @@
+id: writes-only-in-store
+language: typescript
+severity: error
+message: |
+  Only `src/store/` writes to disk (docs/architecture.md, Doors). Return what
+  you'd write as a value and let the store write it.
+note: |
+  Two branches. A named import of a write function from `fs` or `fs/promises`
+  catches `writeFile(...)` however it's later called. A member call catches
+  `fs.writeFileSync(...)`, but only on an object named like the fs module, so
+  an emitter's own `link()` or `rename()` doesn't fire.
+files:
+  - 'src/**/*.ts'
+ignores:
+  - 'src/**/__tests__/**'
+  - 'src/store.ts'
+  - 'src/store/**'
+rule:
+  any:
+    - all:
+        - kind: import_statement
+        - has:
+            field: source
+            regex: "^['\"](node:)?fs(/promises)?['\"]$"
+        - has:
+            stopBy: end
+            kind: import_specifier
+            has:
+              field: name
+              regex: '^(writeFile|appendFile|mkdir|mkdtemp|rm|rmdir|rename|copyFile|cp|unlink|symlink|link|truncate|chmod|chown|utimes|createWriteStream)(Sync)?$'
+    - kind: call_expression
+      has:
+        field: function
+        kind: member_expression
+        all:
+          - has:
+              field: object
+              regex: '^(fs|fsp|fsPromises|promises)$'
+          - has:
+              field: property
+              regex: '^(writeFile|appendFile|mkdir|mkdtemp|rm|rmdir|rename|copyFile|cp|unlink|symlink|link|truncate|chmod|chown|utimes|createWriteStream)(Sync)?$'

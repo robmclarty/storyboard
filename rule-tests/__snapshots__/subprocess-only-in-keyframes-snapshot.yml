@@ -1,0 +1,54 @@
+id: subprocess-only-in-keyframes
+snapshots:
+  ? |
+    const cp = await import('node:child_process')
+  : labels:
+    - source: import('node:child_process')
+      style: primary
+      start: 17
+      end: 45
+    - source: import
+      style: secondary
+      start: 17
+      end: 23
+    - source: '''node:child_process'''
+      style: secondary
+      start: 24
+      end: 44
+    - source: '''node:child_process'''
+      style: secondary
+      start: 24
+      end: 44
+  ? |
+    export { spawnSync } from 'node:child_process'
+  : labels:
+    - source: '''node:child_process'''
+      style: primary
+      start: 26
+      end: 46
+    - source: export { spawnSync } from 'node:child_process'
+      style: secondary
+      start: 0
+      end: 46
+  ? |
+    import { execFileSync } from 'child_process'
+  : labels:
+    - source: '''child_process'''
+      style: primary
+      start: 29
+      end: 44
+    - source: import { execFileSync } from 'child_process'
+      style: secondary
+      start: 0
+      end: 44
+  ? |
+    import { spawn } from 'node:child_process'
+  : labels:
+    - source: '''node:child_process'''
+      style: primary
+      start: 22
+      end: 42
+    - source: import { spawn } from 'node:child_process'
+      style: secondary
+      start: 0
+      end: 42

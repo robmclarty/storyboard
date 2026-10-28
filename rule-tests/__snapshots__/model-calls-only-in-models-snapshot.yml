@@ -1,0 +1,144 @@
+id: model-calls-only-in-models
+snapshots:
+  ? |
+    const response = await fetch('https://example.com')
+  : labels:
+    - source: fetch('https://example.com')
+      style: primary
+      start: 23
+      end: 51
+    - source: fetch
+      style: secondary
+      start: 23
+      end: 28
+  ? |
+    const response = await globalThis.fetch(url)
+  : labels:
+    - source: globalThis.fetch(url)
+      style: primary
+      start: 23
+      end: 44
+    - source: globalThis.fetch
+      style: secondary
+      start: 23
+      end: 39
+  ? |
+    const { Ollama } = await import('ollama')
+  : labels:
+    - source: import('ollama')
+      style: primary
+      start: 25
+      end: 41
+    - source: import
+      style: secondary
+      start: 25
+      end: 31
+    - source: '''ollama'''
+      style: secondary
+      start: 32
+      end: 40
+    - source: '''ollama'''
+      style: secondary
+      start: 32
+      end: 40
+  ? |
+    import Anthropic from '@anthropic-ai/sdk'
+  : labels:
+    - source: '''@anthropic-ai/sdk'''
+      style: primary
+      start: 22
+      end: 41
+    - source: import Anthropic from '@anthropic-ai/sdk'
+      style: secondary
+      start: 0
+      end: 41
+  ? |
+    import { Ollama } from 'ollama'
+  : labels:
+    - source: '''ollama'''
+      style: primary
+      start: 23
+      end: 31
+    - source: import { Ollama } from 'ollama'
+      style: secondary
+      start: 0
+      end: 31
+  ? |
+    import { anthropic } from 'fascicle/adapters'
+  : labels:
+    - source: '''fascicle/adapters'''
+      style: primary
+      start: 26
+      end: 45
+    - source: import { anthropic } from 'fascicle/adapters'
+      style: secondary
+      start: 0
+      end: 45
+  ? |
+    import { model_call as call } from 'fascicle'
+  : labels:
+    - source: import { model_call as call } from 'fascicle'
+      style: primary
+      start: 0
+      end: 45
+    - source: '''fascicle'''
+      style: secondary
+      start: 35
+      end: 45
+    - source: model_call
+      style: secondary
+      start: 9
+      end: 19
+    - source: model_call as call
+      style: secondary
+      start: 9
+      end: 27
+  ? |
+    import { model_step } from 'fascicle'
+  : labels:
+    - source: import { model_step } from 'fascicle'
+      style: primary
+      start: 0
+      end: 37
+    - source: '''fascicle'''
+      style: secondary
+      start: 27
+      end: 37
+    - source: model_step
+      style: secondary
+      start: 9
+      end: 19
+    - source: model_step
+      style: secondary
+      start: 9
+      end: 19
+  ? |
+    import { request } from 'node:https'
+  : labels:
+    - source: '''node:https'''
+      style: primary
+      start: 24
+      end: 36
+    - source: import { request } from 'node:https'
+      style: secondary
+      start: 0
+      end: 36
+  ? |
+    import { sequence, create_engine } from 'fascicle'
+  : labels:
+    - source: import { sequence, create_engine } from 'fascicle'
+      style: primary
+      start: 0
+      end: 50
+    - source: '''fascicle'''
+      style: secondary
+      start: 40
+      end: 50
+    - source: create_engine
+      style: secondary
+      start: 19
+      end: 32
+    - source: create_engine
+      style: secondary
+      start: 19
+      end: 32

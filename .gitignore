@@ -1,0 +1,27 @@
+# dependencies and build output
+node_modules/
+.pnpm-store/
+dist/
+*.tsbuildinfo
+
+# checkride and its tools write here; .check/ is regenerated every run
+.check/
+.fallow/
+.stryker-tmp/
+coverage/
+
+# secrets: commit .env.example, never .env
+.env
+.env.*
+!.env.example
+
+# per-machine agent settings (the shared .claude/settings.json is committed)
+.claude/settings.local.json
+
+# OS and editor litter
+.DS_Store
+*.log
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json

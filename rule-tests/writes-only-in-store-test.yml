@@ -1,0 +1,23 @@
+id: writes-only-in-store
+valid:
+  - |
+    import { readFileSync } from 'node:fs'
+  - |
+    import { readFile } from 'node:fs/promises'
+  - |
+    const text = fs.readFileSync('brief.md', 'utf8')
+  - |
+    const href = link('spec.md')
+  - |
+    const moved = brief.rename('intent')
+invalid:
+  - |
+    import { writeFileSync } from 'node:fs'
+  - |
+    import { readFile, writeFile } from 'node:fs/promises'
+  - |
+    import { mkdir as make } from 'fs'
+  - |
+    fs.writeFileSync('brief.md', text)
+  - |
+    await fsp.rm('dir', { recursive: true })

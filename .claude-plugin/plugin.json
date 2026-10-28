@@ -1,0 +1,11 @@
+{
+  "name": "storyboard",
+  "displayName": "storyboard",
+  "version": "0.1.0",
+  "description": "Interviews a person broad to narrow, then drafts the intent, spec, design and map the rest of the toolchain builds from.",
+  "author": { "name": "Rob McLarty", "email": "hello@robmclarty.com", "url": "https://robmclarty.com" },
+  "homepage": "https://github.com/robmclarty/storyboard#readme",
+  "repository": "https://github.com/robmclarty/storyboard",
+  "license": "Apache-2.0",
+  "keywords": ["claude-code", "planning", "interview", "spec", "keyframes"]
+}

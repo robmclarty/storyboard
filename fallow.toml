@@ -1,0 +1,137 @@
+# Fallow: dead code, circular deps, duplication, complexity, architecture boundaries.
+# Docs: https://docs.fallow.tools
+
+# test/fixtures/ holds fake repos and deliberately broken inputs: data, never code.
+ignorePatterns = ["**/test/fixtures/**"]
+
+entry = [
+  "src/index.ts",
+  "src/**/*.test.ts",
+  "test/**/*.test.ts",
+]
+
+# CLI/tooling deps used via command line or config files, not imported from source.
+ignoreDependencies = ["@ast-grep/cli"]
+
+# bin/storyboard.js imports the built CLI, which exists only after `pnpm build`.
+# Its source, src/cli.ts, is analyzed directly.
+ignoreUnresolvedImports = ["../dist/cli.js"]
+
+[rules]
+unused-exports = "error"
+unused-files = "error"
+unused-dependencies = "error"
+circular-dependencies = "error"
+boundary-violation = "error"
+
+# The rings, from docs/architecture.md. This section is the map: every file in
+# src/ belongs to one zone, and a zone imports only the zones it lists. A module
+# starts as a file and may grow into a folder, so each zone names both forms.
+# Change a zone here and its row in docs/architecture.md in the same commit.
+
+# Tests first: a file joins the first zone it matches, and fallow has no
+# negated patterns, so this is what keeps src/brief/__tests__/ out of the core.
+# Tests aren't shipped code, so they may import anything and call anything.
+[[boundaries.zones]]
+name = "tests"
+patterns = ["src/**/__tests__/**", "test/**"]
+
+# Core: pure and deterministic. The brief and an answer go in; an updated brief,
+# the next questions or a drafted file's text come out.
+[[boundaries.zones]]
+name = "core"
+patterns = [
+  "src/{brief,scheduler,turn,emit,adapters,place}.ts",
+  "src/{brief,scheduler,turn,emit,adapters,place}/**",
+]
+
+# Edges: one module per kind of effect, each importing only the core.
+[[boundaries.zones]]
+name = "models"
+patterns = ["src/models.ts", "src/models/**"]
+
+[[boundaries.zones]]
+name = "store"
+patterns = ["src/store.ts", "src/store/**"]
+
+[[boundaries.zones]]
+name = "repo"
+patterns = ["src/repo.ts", "src/repo/**"]
+
+[[boundaries.zones]]
+name = "keyframes"
+patterns = ["src/keyframes.ts", "src/keyframes/**"]
+
+# Wiring: the steps that join the core to the edges, and the fascicle flow.
+[[boundaries.zones]]
+name = "wiring"
+patterns = [
+  "src/{intake,lens,draft,flow}.ts",
+  "src/{intake,lens,draft,flow}/**",
+]
+
+# Shells: the front ends and the package's public surface. Thin by design.
+[[boundaries.zones]]
+name = "shells"
+patterns = ["src/{index,cli,acp}.ts", "src/{cli,acp}/**"]
+
+[[boundaries.rules]]
+from = "tests"
+allow = ["core", "models", "store", "repo", "keyframes", "wiring", "shells"]
+
+[[boundaries.rules]]
+from = "core"
+allow = []
+
+[[boundaries.rules]]
+from = "models"
+allow = ["core"]
+
+[[boundaries.rules]]
+from = "store"
+allow = ["core"]
+
+[[boundaries.rules]]
+from = "repo"
+allow = ["core"]
+
+[[boundaries.rules]]
+from = "keyframes"
+allow = ["core"]
+
+[[boundaries.rules]]
+from = "wiring"
+allow = ["core", "models", "store", "repo", "keyframes"]
+
+[[boundaries.rules]]
+from = "shells"
+allow = ["core", "models", "store", "repo", "keyframes", "wiring"]
+
+# A file outside every zone fails the gate, so a new module can't land off the
+# map. The map is of src/: the bin and the root's tool configs sit outside it.
+[boundaries.coverage]
+requireAllFiles = true
+allowUnmatched = ["bin/**", "*.config.ts"]
+
+# The core touches nothing outside its arguments: no files, processes, network,
+# clock, randomness, environment or model.
+[[boundaries.calls.forbidden]]
+from = "core"
+callee = [
+  "fs.*",
+  "fs/promises.*",
+  "child_process.*",
+  "fetch",
+  "Date.now",
+  "Math.random",
+  "process.*",
+  "fascicle.*",
+]
+
+[duplicates]
+mode = "mild"
+minTokens = 50
+
+[health]
+maxCyclomatic = 15
+maxCognitive = 15

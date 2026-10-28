@@ -1,0 +1,33 @@
+id: model-calls-only-in-models
+valid:
+  - |
+    import { sequence, branch } from 'fascicle'
+  - |
+    import type { Step } from 'fascicle'
+  - |
+    import { model_step } from '../models/index.js'
+  - |
+    const label = 'fetch'
+  - |
+    const url = 'https://example.com'
+invalid:
+  - |
+    import { model_step } from 'fascicle'
+  - |
+    import { sequence, create_engine } from 'fascicle'
+  - |
+    import { model_call as call } from 'fascicle'
+  - |
+    import { anthropic } from 'fascicle/adapters'
+  - |
+    import Anthropic from '@anthropic-ai/sdk'
+  - |
+    import { Ollama } from 'ollama'
+  - |
+    import { request } from 'node:https'
+  - |
+    const response = await fetch('https://example.com')
+  - |
+    const response = await globalThis.fetch(url)
+  - |
+    const { Ollama } = await import('ollama')

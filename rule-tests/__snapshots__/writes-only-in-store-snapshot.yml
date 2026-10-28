@@ -1,0 +1,97 @@
+id: writes-only-in-store
+snapshots:
+  ? |
+    await fsp.rm('dir', { recursive: true })
+  : labels:
+    - source: 'fsp.rm(''dir'', { recursive: true })'
+      style: primary
+      start: 6
+      end: 40
+    - source: fsp
+      style: secondary
+      start: 6
+      end: 9
+    - source: rm
+      style: secondary
+      start: 10
+      end: 12
+    - source: fsp.rm
+      style: secondary
+      start: 6
+      end: 12
+  ? |
+    fs.writeFileSync('brief.md', text)
+  : labels:
+    - source: fs.writeFileSync('brief.md', text)
+      style: primary
+      start: 0
+      end: 34
+    - source: fs
+      style: secondary
+      start: 0
+      end: 2
+    - source: writeFileSync
+      style: secondary
+      start: 3
+      end: 16
+    - source: fs.writeFileSync
+      style: secondary
+      start: 0
+      end: 16
+  ? |
+    import { mkdir as make } from 'fs'
+  : labels:
+    - source: import { mkdir as make } from 'fs'
+      style: primary
+      start: 0
+      end: 34
+    - source: '''fs'''
+      style: secondary
+      start: 30
+      end: 34
+    - source: mkdir
+      style: secondary
+      start: 9
+      end: 14
+    - source: mkdir as make
+      style: secondary
+      start: 9
+      end: 22
+  ? |
+    import { readFile, writeFile } from 'node:fs/promises'
+  : labels:
+    - source: import { readFile, writeFile } from 'node:fs/promises'
+      style: primary
+      start: 0
+      end: 54
+    - source: '''node:fs/promises'''
+      style: secondary
+      start: 36
+      end: 54
+    - source: writeFile
+      style: secondary
+      start: 19
+      end: 28
+    - source: writeFile
+      style: secondary
+      start: 19
+      end: 28
+  ? |
+    import { writeFileSync } from 'node:fs'
+  : labels:
+    - source: import { writeFileSync } from 'node:fs'
+      style: primary
+      start: 0
+      end: 39
+    - source: '''node:fs'''
+      style: secondary
+      start: 30
+      end: 39
+    - source: writeFileSync
+      style: secondary
+      start: 9
+      end: 22
+    - source: writeFileSync
+      style: secondary
+      start: 9
+      end: 22

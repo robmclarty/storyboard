@@ -1,0 +1,59 @@
+{
+  "name": "@robmclarty/storyboard",
+  "version": "0.1.0",
+  "description": "Interviews a person broad to narrow, then drafts the intent, spec, design and map the rest of the toolchain builds from.",
+  "license": "Apache-2.0",
+  "author": "Rob McLarty",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robmclarty/storyboard.git"
+  },
+  "homepage": "https://github.com/robmclarty/storyboard#readme",
+  "bugs": "https://github.com/robmclarty/storyboard/issues",
+  "type": "module",
+  "bin": {
+    "storyboard": "bin/storyboard.js"
+  },
+  "files": [
+    ".claude-plugin/",
+    "bin/",
+    "dist/",
+    "lenses/",
+    "skills/",
+    "!dist/**/__tests__/**"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@11.28.5",
+  "scripts": {
+    "check": "checkride",
+    "check:all": "checkride --all",
+    "check:json": "checkride --json",
+    "check:bail": "checkride --bail",
+    "check:changed": "checkride --changed",
+    "check:fix": "checkride fix",
+    "doctor": "checkride doctor",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "tsc --build",
+    "types": "tsc --build",
+    "prepack": "node --eval \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc --build --force"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@ast-grep/cli": "0.45.3",
+    "@types/node": "22.20.5",
+    "@vitest/coverage-v8": "5.0.3",
+    "checkride": "0.19.0",
+    "cspell": "10.3.6",
+    "fallow": "3.31.0",
+    "markdownlint-cli2": "0.23.3",
+    "oxlint": "1.87.0",
+    "oxlint-tsgolint": "7.0.2003",
+    "typescript": "7.0.2",
+    "vitest": "5.0.3"
+  }
+}

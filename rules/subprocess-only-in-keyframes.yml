@@ -1,0 +1,32 @@
+id: subprocess-only-in-keyframes
+language: typescript
+severity: error
+message: |
+  Only `src/keyframes/` starts a process, to run `keyframes check`
+  (docs/architecture.md, Doors). If another module needs one, that's a change
+  to the map: raise it rather than importing `child_process` here.
+files:
+  - 'src/**/*.ts'
+ignores:
+  - 'src/**/__tests__/**'
+  - 'src/keyframes.ts'
+  - 'src/keyframes/**'
+rule:
+  any:
+    - all:
+        - kind: string
+        - regex: "^['\"](node:)?child_process['\"]$"
+        - inside:
+            any:
+              - kind: import_statement
+              - kind: export_statement
+    - kind: call_expression
+      all:
+        - has:
+            field: function
+            kind: import
+        - has:
+            field: arguments
+            has:
+              kind: string
+              regex: "^['\"](node:)?child_process['\"]$"

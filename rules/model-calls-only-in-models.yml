@@ -1,0 +1,51 @@
+id: model-calls-only-in-models
+language: typescript
+severity: error
+message: |
+  Only `src/models/` reaches a model or the network (docs/architecture.md,
+  Doors). Model calls are rationed and the local/frontier split lives in one
+  place, so import a model step from `models/` instead.
+note: |
+  fascicle's composition primitives (`sequence`, `branch`, ...) stay open to
+  the wiring; only its model surface is held here. A provider SDK, a raw
+  socket or a bare `fetch` would go around that surface, so they're held too.
+files:
+  - 'src/**/*.ts'
+ignores:
+  - 'src/**/__tests__/**'
+  - 'src/models.ts'
+  - 'src/models/**'
+rule:
+  any:
+    - all:
+        - kind: import_statement
+        - has:
+            field: source
+            regex: "^['\"]fascicle['\"]$"
+        - has:
+            stopBy: end
+            kind: import_specifier
+            has:
+              field: name
+              regex: '^(create_engine|model_call|model_step)$'
+    - all:
+        - kind: string
+        - regex: &modules "^['\"](fascicle/adapters|@anthropic-ai/[^'\"]+|openai|ollama|@google/genai|@ai-sdk/[^'\"]+|ai|(node:)?(http|https|http2|net|tls))['\"]$"
+        - inside:
+            any:
+              - kind: import_statement
+              - kind: export_statement
+    - kind: call_expression
+      all:
+        - has:
+            field: function
+            kind: import
+        - has:
+            field: arguments
+            has:
+              kind: string
+              regex: *modules
+    - kind: call_expression
+      has:
+        field: function
+        regex: '^(globalThis\.)?fetch$'
