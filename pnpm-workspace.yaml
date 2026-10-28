@@ -1,6 +1,14 @@
 # Flat (single-package) repo: no `packages:` globs, so this defines no workspace
-# members. It exists only to approve the native build scripts of the two tools
-# that ship platform binaries, which pnpm 11 blocks by default.
+# members. It approves the native build scripts of the two tools that ship
+# platform binaries, which pnpm 11 blocks by default, and exempts our own
+# packages from the release-age quarantine.
 allowBuilds:
   '@ast-grep/cli': true
   fallow: true
+
+# The global minimumReleaseAge (48h) blunts a third-party registry compromise.
+# checkride and fascicle are first-party, published from repos on this machine,
+# so the quarantine buys nothing and only delays adopting a fix.
+minimumReleaseAgeExclude:
+  - checkride
+  - fascicle
