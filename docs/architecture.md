@@ -104,7 +104,7 @@ A ring may import any ring below it. An edge imports only the core, never anothe
 | `index` | shell | The package's public surface | now |
 
 Build steps are the sketch's [build order](specs/initial_sketch.md#build-order-when-its-time).
-Only `cli`, `index` and `brief` exist so far; every other module is created by the step that needs it.
+Only `cli`, `index`, `brief` and `scheduler` exist so far; every other module is created by the step that needs it.
 
 ### What each ring may do
 
