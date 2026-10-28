@@ -236,6 +236,7 @@ describe('schedule over a whole session', () => {
       rounds.push([picked.lens, picked.slots.length]);
       log.push({
         kind: 'asked',
+        call: 1,
         at: '2026-10-28T10:00:00.000Z',
         questions: picked.slots.map((id) => ({ id: `q${log.length}-${id}`, slots: [id], text: 'Why?', options: [], recommended: null })),
       });

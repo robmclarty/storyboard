@@ -166,8 +166,10 @@ In the project being planned, during the interview:
 
 ```text
 .storyboard/<slug>/
-  answers.jsonl  one JSON line per turn of the core: what was asked, the answers word for word,
-                 the slot updates read from them, and the draft's playback; appended, never rewritten
+  answers.jsonl  one JSON line per event of the core: what was asked, the answers word for word,
+                 the slot updates read from them, and the draft's playback; appended, never
+                 rewritten. Each line carries `call`, the number of the `storyboard turn` call
+                 that wrote it, counting from 1, so the lines group into one exchange per call
   brief.md       every slot, its status and its value, rendered from the log every turn and never
                  read back
 ```

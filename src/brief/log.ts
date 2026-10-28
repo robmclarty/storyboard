@@ -1,9 +1,11 @@
 import { attempt, refuse, type Read } from './read.js';
 
-// The answers log, `answers.jsonl`: one JSON line for each turn of the core, appended and never
-// rewritten (D11 (log-is-truth)). Every model output the brief depends on is in it, the slot
-// updates read from each answer and the questions as they were phrased, so it replays without a
-// model.
+// The answers log, `answers.jsonl`: one JSON line for each event of the core, appended and never
+// rewritten, each stamped with the `storyboard turn` call that wrote it (D11 (log-is-truth)).
+// Every model output the brief depends on is in it, the slot updates read from each answer and the
+// questions as they were phrased, so it replays without a model. A call can append several lines,
+// so each answer and its reading are on disk before the next model call can fail, and the call
+// number groups them back into one exchange per call.
 
 const STATUSES = ['clear', 'partial', 'missing'] as const;
 
@@ -44,30 +46,34 @@ export type Update = {
   readonly value: readonly string[];
 };
 
-/** One line of the log. `at` is the clock's time, passed in as a value (C3 (pure-core)). */
-export type Entry =
-  | { readonly kind: 'asked'; readonly at: string; readonly questions: readonly Question[] }
-  | {
-      readonly kind: 'answered';
-      readonly at: string;
-      readonly answers: readonly Answer[];
-      readonly updates: readonly Update[];
-    }
-  | { readonly kind: 'classified'; readonly at: string; readonly work: Work; readonly size: Size }
-  | { readonly kind: 'done'; readonly at: string }
-  | { readonly kind: 'drafted'; readonly at: string; readonly chunks: readonly string[] }
-  | { readonly kind: 'passed'; readonly at: string; readonly chunk: number }
-  | {
-      readonly kind: 'corrected';
-      readonly at: string;
-      readonly chunk: number;
-      /** The correction, word for word. */
-      readonly text: string;
-      /** The draft's items it names, such as `D3`. */
-      readonly items: readonly string[];
-      readonly updates: readonly Update[];
-    }
-  | { readonly kind: 'accepted'; readonly at: string };
+/** What every entry is stamped with, both passed in as values (C3 (pure-core)). */
+export type Stamp = {
+  /** The number of the `storyboard turn` call that wrote it, counting from 1. */
+  readonly call: number;
+  /** The clock's time. */
+  readonly at: string;
+};
+
+/** One line of the log. */
+export type Entry = Stamp &
+  (
+    | { readonly kind: 'asked'; readonly questions: readonly Question[] }
+    | { readonly kind: 'answered'; readonly answers: readonly Answer[]; readonly updates: readonly Update[] }
+    | { readonly kind: 'classified'; readonly work: Work; readonly size: Size }
+    | { readonly kind: 'done' }
+    | { readonly kind: 'drafted'; readonly chunks: readonly string[] }
+    | { readonly kind: 'passed'; readonly chunk: number }
+    | {
+        readonly kind: 'corrected';
+        readonly chunk: number;
+        /** The correction, word for word. */
+        readonly text: string;
+        /** The draft's items it names, such as `D3`. */
+        readonly items: readonly string[];
+        readonly updates: readonly Update[];
+      }
+    | { readonly kind: 'accepted' }
+  );
 
 const KINDS = [
   'asked',
@@ -140,13 +146,18 @@ const oneOf =
     return found;
   };
 
-/** A whole number, zero or more. */
-const countAt = (raw: unknown, where: string): number => {
-  if (typeof raw !== 'number' || !Number.isInteger(raw) || raw < 0) {
-    refuse(`${where} isn't a whole number`);
-  }
-  return raw;
-};
+/** A whole number, `min` or more. */
+const wholeFrom =
+  (min: number) =>
+  (raw: unknown, where: string): number => {
+    if (typeof raw !== 'number' || !Number.isInteger(raw) || raw < min) {
+      refuse(`${where} isn't a whole number from ${min}`);
+    }
+    return raw;
+  };
+
+/** A count or an index, zero or more. */
+const countAt = wholeFrom(0);
 
 /** A list of `min` to `max` items, each read by `item`. */
 const listAt = <T>(
@@ -222,58 +233,58 @@ const updatesAt = (raw: unknown): readonly Update[] => {
   return updates;
 };
 
-/** The fields of an entry of a known kind, and its time. */
-const entryFields = (raw: unknown, names: readonly string[]): readonly [Fields, string] => {
-  const fields = fieldsAt(raw, 'the entry', ['kind', 'at', ...names]);
-  return [fields, textAt(fields.get('at'), '"at"')];
+/** The fields of an entry of a known kind, and its stamp. */
+const entryFields = (raw: unknown, names: readonly string[]): readonly [Fields, Stamp] => {
+  const fields = fieldsAt(raw, 'the entry', ['kind', 'call', 'at', ...names]);
+  return [fields, { call: wholeFrom(1)(fields.get('call'), '"call"'), at: textAt(fields.get('at'), '"at"') }];
 };
 
 /** How each kind of entry reads, building it with its fields in their usual order. */
 const ENTRIES: { readonly [K in Entry['kind']]: (raw: unknown) => Extract<Entry, { kind: K }> } = {
   asked: (raw) => {
-    const [fields, at] = entryFields(raw, ['questions']);
+    const [fields, stamp] = entryFields(raw, ['questions']);
     const questions = listAt(fields.get('questions'), '"questions"', questionAt, [1, 4]);
     distinct(
       questions.map((question) => question.id),
       '"questions"',
     );
-    return { kind: 'asked', at, questions };
+    return { kind: 'asked', ...stamp, questions };
   },
   answered: (raw) => {
-    const [fields, at] = entryFields(raw, ['answers', 'updates']);
+    const [fields, stamp] = entryFields(raw, ['answers', 'updates']);
     const answers = listAt(fields.get('answers'), '"answers"', answerAt, SOME);
     distinct(
       answers.map((answer) => answer.question),
       '"answers"',
     );
-    return { kind: 'answered', at, answers, updates: updatesAt(fields.get('updates')) };
+    return { kind: 'answered', ...stamp, answers, updates: updatesAt(fields.get('updates')) };
   },
   classified: (raw) => {
-    const [fields, at] = entryFields(raw, ['work', 'size']);
+    const [fields, stamp] = entryFields(raw, ['work', 'size']);
     const work = oneOf(WORKS)(fields.get('work'), '"work"');
-    return { kind: 'classified', at, work, size: oneOf(SIZES)(fields.get('size'), '"size"') };
+    return { kind: 'classified', ...stamp, work, size: oneOf(SIZES)(fields.get('size'), '"size"') };
   },
-  done: (raw) => ({ kind: 'done', at: entryFields(raw, [])[1] }),
+  done: (raw) => ({ kind: 'done', ...entryFields(raw, [])[1] }),
   drafted: (raw) => {
-    const [fields, at] = entryFields(raw, ['chunks']);
-    return { kind: 'drafted', at, chunks: listAt(fields.get('chunks'), '"chunks"', textAt, SOME) };
+    const [fields, stamp] = entryFields(raw, ['chunks']);
+    return { kind: 'drafted', ...stamp, chunks: listAt(fields.get('chunks'), '"chunks"', textAt, SOME) };
   },
   passed: (raw) => {
-    const [fields, at] = entryFields(raw, ['chunk']);
-    return { kind: 'passed', at, chunk: countAt(fields.get('chunk'), '"chunk"') };
+    const [fields, stamp] = entryFields(raw, ['chunk']);
+    return { kind: 'passed', ...stamp, chunk: countAt(fields.get('chunk'), '"chunk"') };
   },
   corrected: (raw) => {
-    const [fields, at] = entryFields(raw, ['chunk', 'text', 'items', 'updates']);
+    const [fields, stamp] = entryFields(raw, ['chunk', 'text', 'items', 'updates']);
     return {
       kind: 'corrected',
-      at,
+      ...stamp,
       chunk: countAt(fields.get('chunk'), '"chunk"'),
       text: textAt(fields.get('text'), '"text"'),
       items: listAt(fields.get('items'), '"items"', tokenAt, ANY),
       updates: updatesAt(fields.get('updates')),
     };
   },
-  accepted: (raw) => ({ kind: 'accepted', at: entryFields(raw, [])[1] }),
+  accepted: (raw) => ({ kind: 'accepted', ...entryFields(raw, [])[1] }),
 };
 
 /** Reads an entry of any kind. */

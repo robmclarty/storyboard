@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { readLog, readSlot, writeEntry, type Entry, type Question, type Slot, type SlotRow } from '../brief/index.js';
+import { readLog, readSlot, writeEntry, type Entry, type Question, type Slot, type SlotRow, type Stamp } from '../brief/index.js';
 import { resume, turn, type Event, type Next, type Session } from '../turn.js';
 
 const AT = '2026-10-28T10:00:00.000Z';
@@ -71,7 +71,22 @@ const INTAKE: readonly Event[] = [
   { kind: 'classified', work: 'library', size: 'medium' },
 ];
 
-/** Runs the events from a new session, each as one turn, and keeps every entry and next step. */
+/** The next steps where a call hands back: each waits on the person, or ends the session. */
+const HANDS_BACK: readonly Next['kind'][] = ['answer', 'play', 'accept', 'accepted', 'no-planner'];
+
+/**
+ * The stamp the flow will give the next event: the first call starts the session, a new call starts
+ * each time the session has handed back to the person, and a call carries on until it does.
+ */
+const stampFor = (session: Session): Stamp => ({
+  call: session.call === 0 || HANDS_BACK.includes(session.next.kind) ? session.call + 1 : session.call,
+  at: AT,
+});
+
+/**
+ * Runs the events from a new session, each as one turn in the call the flow would take it in, and
+ * keeps every entry and next step.
+ */
 const run = (events: readonly Event[], slots: readonly Slot[] = SLOTS) => {
   const started = resume(slots, []);
   if (!started.ok) {
@@ -81,7 +96,7 @@ const run = (events: readonly Event[], slots: readonly Slot[] = SLOTS) => {
   const entries: Entry[] = [];
   const nexts: Next[] = [session.next];
   for (const event of events) {
-    const turned = turn(session, event, AT);
+    const turned = turn(session, event, stampFor(session));
     if (!turned.ok) {
       throw new Error(`${event.kind}: ${turned.problem}`);
     }
@@ -94,7 +109,8 @@ const run = (events: readonly Event[], slots: readonly Slot[] = SLOTS) => {
 
 /** What a turn refuses after `before`, or undefined if it takes the event. */
 const refused = (before: readonly Event[], event: Event): string | undefined => {
-  const turned = turn(run(before).session, event, AT);
+  const { session } = run(before);
+  const turned = turn(session, event, stampFor(session));
   return turned.ok ? undefined : turned.problem;
 };
 
@@ -173,6 +189,7 @@ describe('a whole session, from intake to accepted', () => {
     const correction = entries[9];
     expect(correction).toEqual({
       kind: 'corrected',
+      call: 6,
       at: AT,
       chunk: 1,
       text: 'D1 should be Postgres.',
@@ -195,11 +212,29 @@ describe('a whole session, from intake to accepted', () => {
     expect(nexts.slice(12)).toEqual([{ kind: 'play', chunk: 1, text: CORRECTED }, { kind: 'accept' }, { kind: 'accepted' }]);
   });
 
-  test('every turn returns the entry it adds: its event, at the time given, with the chunk numbered', () => {
+  test('every turn returns the entry it adds: its event, stamped as given, with the chunk numbered', () => {
     expect(entries.map((entry) => entry.kind)).toEqual(EVENTS.map((event) => event.kind));
     expect(entries.every((entry) => entry.at === AT)).toBe(true);
     expect(entries.flatMap((entry) => (entry.kind === 'passed' || entry.kind === 'corrected' ? [entry.chunk] : []))).toEqual([0, 1, 2, 1]);
     expect(session.entries).toEqual(entries);
+  });
+
+  test('grouped by the call that wrote them, the entries give one exchange per call', () => {
+    const calls = Map.groupBy(entries, (entry) => entry.call);
+    expect([...calls.keys()]).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect([...calls.values()].map((call) => call.map((entry) => entry.kind))).toEqual([
+      ['asked'],
+      ['answered', 'classified', 'asked'],
+      ['answered', 'asked'],
+      ['done', 'drafted'],
+      ['passed'],
+      ['corrected'],
+      ['passed', 'drafted'],
+      ['passed'],
+      ['accepted'],
+    ]);
+    const handed = [...calls.values()].map((call) => resumed(entries.slice(0, entries.lastIndexOf(call.at(-1)!) + 1)).next.kind);
+    expect(handed).toEqual(['answer', 'answer', 'answer', 'play', 'play', 'play', 'play', 'accept', 'accepted']);
   });
 
   test('replaying the entries gives the same brief and the same next step, after every turn', () => {
@@ -333,7 +368,7 @@ describe('a turn refuses an event that can\'t come now, and leaves the session a
     ['an event the log could not hold', [asked(...INTAKE_QUESTIONS)], answered({ 'intake-1': '   ' }), '"answers"[0].text isn\'t text'],
   ])('%s', (_name, before, event, problem) => {
     const { session } = run(before);
-    const turned = turn(session, event, AT);
+    const turned = turn(session, event, stampFor(session));
     expect(turned.ok ? undefined : turned.problem).toContain(problem);
     expect(resumed(session.entries)).toEqual(session);
   });
@@ -355,8 +390,8 @@ describe('resume', () => {
   });
 
   test('refuses a pass about a chunk the playback is not at', () => {
-    const { entries } = run([...INTAKE, { kind: 'done' }, { kind: 'drafted', chunks: ['a', 'b'] }]);
-    expect(resume(SLOTS, [...entries, { kind: 'passed', at: AT, chunk: 1 }])).toEqual({
+    const { session, entries } = run([...INTAKE, { kind: 'done' }, { kind: 'drafted', chunks: ['a', 'b'] }]);
+    expect(resume(SLOTS, [...entries, { kind: 'passed', ...stampFor(session), chunk: 1 }])).toEqual({
       ok: false,
       line: entries.length + 1,
       problem: 'the entry is about chunk 1, and the playback is at chunk 0',
@@ -370,5 +405,52 @@ describe('resume', () => {
   test('takes the caps it is given, and the session keeps them', () => {
     const read = resume(SLOTS, run(INTAKE).entries, { round: 1, lens: 5 });
     expect(read.ok && read.value.next).toEqual({ kind: 'ask', lens: 'intent', slots: ['decisions'] });
+  });
+});
+
+describe('the call that wrote each entry', () => {
+  const { session, entries } = run(INTAKE);
+
+  test('a new session has no last call, and every turn gives the session the call it was stamped with', () => {
+    expect(resumed([]).call).toBe(0);
+    expect(entries.map((entry) => entry.call)).toEqual([1, 2, 2]);
+    expect([session.call, resumed(entries).call]).toEqual([2, 2]);
+  });
+
+  test("a turn takes the session's last call, or the next one", () => {
+    const event = asked(question('q1', ['decisions']));
+    for (const call of [2, 3]) {
+      const turned = turn(session, event, { call, at: AT });
+      expect(turned.ok && [turned.value.entry.call, turned.value.session.call]).toEqual([call, call]);
+    }
+  });
+
+  test.each<readonly [string, number, number, string]>([
+    ['a call before the last', 2, 1, 'the entry is from call 1, after an entry from call 2'],
+    ['a call past the next', 2, 4, 'the entry is from call 4, which skips call 3'],
+    ['a first entry from any call but the first', 0, 2, 'the entry is from call 2, which skips call 1'],
+  ])('a turn refuses %s, and leaves the session as it was', (_name, last, call, problem) => {
+    const before = last === 0 ? resumed([]) : session;
+    expect(turn(before, asked(question('q1', ['decisions'])), { call, at: AT })).toEqual({ ok: false, problem });
+    expect(resumed(before.entries)).toEqual(before);
+  });
+
+  test('resume refuses an entry whose call is lower than the one before it, naming its line', () => {
+    const [first, second, third] = entries;
+    expect(resume(SLOTS, [first!, second!, { ...third!, call: 1 }])).toEqual({
+      ok: false,
+      line: 3,
+      problem: 'the entry is from call 1, after an entry from call 2',
+    });
+  });
+
+  test('resume refuses an entry whose call is more than one higher than the one before it, naming its line', () => {
+    const [first, second] = entries;
+    expect(resume(SLOTS, [first!, { ...second!, call: 3 }])).toEqual({
+      ok: false,
+      line: 2,
+      problem: 'the entry is from call 3, which skips call 2',
+    });
+    expect(resume(SLOTS, [{ ...first!, call: 2 }])).toMatchObject({ ok: false, line: 1, problem: 'the entry is from call 2, which skips call 1' });
   });
 });

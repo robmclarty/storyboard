@@ -30,6 +30,7 @@ export const SLOTS: readonly Slot[] = [
 export const SESSION: readonly Entry[] = [
   {
     kind: 'asked',
+    call: 1,
     at: AT,
     questions: [
       { id: 'intake-1', slots: ['problem', 'audience'], text: "What is it, and who's it for?", options: [], recommended: null },
@@ -38,6 +39,7 @@ export const SESSION: readonly Entry[] = [
   },
   {
     kind: 'answered',
+    call: 2,
     at: AT,
     answers: [
       { question: 'intake-1', text: 'A planner that interviews me, for me and agents.' },
@@ -49,9 +51,10 @@ export const SESSION: readonly Entry[] = [
       { slot: 'no-gos', status: 'clear', value: ['Never run in, draft for or write into a pilot repo.'] },
     ],
   },
-  { kind: 'classified', at: AT, work: 'library', size: 'medium' },
+  { kind: 'classified', call: 2, at: AT, work: 'library', size: 'medium' },
   {
     kind: 'asked',
+    call: 2,
     at: AT,
     questions: [
       {
@@ -66,21 +69,23 @@ export const SESSION: readonly Entry[] = [
   },
   {
     kind: 'answered',
+    call: 3,
     at: AT,
     answers: [{ question: 'q3', text: 'The owner' }],
     updates: [{ slot: 'audience', status: 'clear', value: ['Rob, as the owner who signs the plan.'] }],
   },
-  { kind: 'done', at: AT },
-  { kind: 'drafted', at: AT, chunks: ['## Intent\n\nA planner.\n\nWhat\'s wrong or missing?'] },
+  { kind: 'done', call: 3, at: AT },
+  { kind: 'drafted', call: 3, at: AT, chunks: ['## Intent\n\nA planner.\n\nWhat\'s wrong or missing?'] },
   {
     kind: 'corrected',
+    call: 4,
     at: AT,
     chunk: 0,
     text: 'The problem is guessed decisions, not lost words.',
     items: [],
     updates: [{ slot: 'problem', status: 'clear', value: ['Agents guess decisions a person never made.'] }],
   },
-  { kind: 'drafted', at: AT, chunks: ['## Intent\n\nA planner that never guesses.\n\nWhat\'s wrong or missing?'] },
-  { kind: 'passed', at: AT, chunk: 0 },
-  { kind: 'accepted', at: AT },
+  { kind: 'drafted', call: 4, at: AT, chunks: ['## Intent\n\nA planner that never guesses.\n\nWhat\'s wrong or missing?'] },
+  { kind: 'passed', call: 5, at: AT, chunk: 0 },
+  { kind: 'accepted', call: 6, at: AT },
 ];

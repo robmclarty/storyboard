@@ -21,6 +21,7 @@ const board = (entries: readonly Entry[]) =>
 /** An asked entry of questions, each about the slots given and recommending what's given. */
 const asked = (...questions: ReadonlyArray<readonly [id: string, slots: readonly string[], recommended: string | null]>): Entry => ({
   kind: 'asked',
+  call: 1,
   at: AT,
   questions: questions.map(([id, slots, recommended]): Question => ({ id, slots, text: `${id}?`, options: [], recommended })),
 });
@@ -28,6 +29,7 @@ const asked = (...questions: ReadonlyArray<readonly [id: string, slots: readonly
 /** An answer to q1 that reads `value` into the principles slot. */
 const update = (value: string[]): Entry => ({
   kind: 'answered',
+  call: 1,
   at: AT,
   answers: [{ question: 'q1', text: 'Yes.' }],
   updates: [{ slot: 'principles', status: value.length === 0 ? 'missing' : 'partial', value }],
@@ -36,6 +38,7 @@ const update = (value: string[]): Entry => ({
 /** An answer to `question` with one update, to `slot`. */
 const answer = (question: string, slot = 'problem'): Entry => ({
   kind: 'answered',
+  call: 1,
   at: AT,
   answers: [{ question, text: 'Yes.' }],
   updates: [{ slot, status: 'partial', value: ['x'] }],
@@ -103,10 +106,10 @@ describe('replay', () => {
   test("the draft, its playback and the accept don't change the board", () => {
     const asking = SESSION.slice(0, 5);
     const after: Entry[] = [
-      { kind: 'done', at: AT },
-      { kind: 'drafted', at: AT, chunks: ['x'] },
-      { kind: 'passed', at: AT, chunk: 0 },
-      { kind: 'accepted', at: AT },
+      { kind: 'done', call: 1, at: AT },
+      { kind: 'drafted', call: 1, at: AT, chunks: ['x'] },
+      { kind: 'passed', call: 1, at: AT, chunk: 0 },
+      { kind: 'accepted', call: 1, at: AT },
     ];
     expect(brief([...asking, ...after])).toEqual(brief(asking));
   });
@@ -139,7 +142,7 @@ describe('replay refuses an entry the brief so far rules out, naming its line', 
     ['an update to a slot no lens has', [asked(['q1', ['problem'], null]), answer('q1', 'scope')], 2, 'an update names the slot "scope", which no lens has'],
     [
       'a correction to a slot no lens has',
-      [{ kind: 'corrected', at: AT, chunk: 0, text: 'No.', items: [], updates: [{ slot: 'scope', status: 'clear', value: ['x'] }] }],
+      [{ kind: 'corrected', call: 1, at: AT, chunk: 0, text: 'No.', items: [], updates: [{ slot: 'scope', status: 'clear', value: ['x'] }] }],
       1,
       'an update names the slot "scope", which no lens has',
     ],

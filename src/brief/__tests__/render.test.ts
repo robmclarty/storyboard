@@ -67,9 +67,10 @@ describe('renderBrief', () => {
 
   test('a statement over several lines stays inside its list item', () => {
     const log: Entry[] = [
-      { kind: 'asked', at: AT, questions: [{ id: 'q1', slots: ['principles'], text: 'Why?', options: [], recommended: null }] },
+      { kind: 'asked', call: 1, at: AT, questions: [{ id: 'q1', slots: ['principles'], text: 'Why?', options: [], recommended: null }] },
       {
         kind: 'answered',
+        call: 1,
         at: AT,
         answers: [{ question: 'q1', text: 'Because.' }],
         updates: [{ slot: 'principles', status: 'partial', value: ['Losing work is worse\nthan being slow.'] }],

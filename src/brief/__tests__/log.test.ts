@@ -26,6 +26,7 @@ const EVERY: readonly Entry[] = [
   ...SESSION,
   {
     kind: 'corrected',
+    call: 6,
     at: AT,
     chunk: 2,
     text: 'C1 is wrong: it may write inside its own folder.\nAnd D2 needs a reason.',
@@ -64,6 +65,7 @@ describe('writeEntry and readLog', () => {
   test('answers and corrections keep their words exactly, spaces and line breaks included', () => {
     const entry: Entry = {
       kind: 'answered',
+      call: 1,
       at: AT,
       answers: [{ question: 'intake-1', text: '  a planner — für mich 🎬\n\twith "quotes" ' }],
       updates: [],
@@ -72,48 +74,61 @@ describe('writeEntry and readLog', () => {
   });
 
   test('fields in another order read, and write back in their usual order', () => {
-    const read = readLog(`{"at":"${AT}","size":"small","work":"game","kind":"classified"}\n`);
-    expect(read.ok && log(read.value)).toBe(`{"kind":"classified","at":"${AT}","work":"game","size":"small"}\n`);
+    const read = readLog(`{"at":"${AT}","size":"small","work":"game","kind":"classified","call":2}\n`);
+    expect(read.ok && log(read.value)).toBe(`{"kind":"classified","call":2,"at":"${AT}","work":"game","size":"small"}\n`);
   });
 
   test('an empty log has no entries, and a last line without its newline still reads', () => {
     expect(readLog('')).toEqual({ ok: true, value: [] });
-    expect(readLog(line({ kind: 'done', at: AT }).trimEnd())).toEqual({ ok: true, value: [{ kind: 'done', at: AT }] });
+    expect(readLog(line({ kind: 'done', call: 1, at: AT }).trimEnd())).toEqual({ ok: true, value: [{ kind: 'done', call: 1, at: AT }] });
   });
 
   test('an entry the log could not read back is refused, not written', () => {
-    expect(writeEntry({ kind: 'asked', at: AT, questions: [] })).toEqual({
+    expect(writeEntry({ kind: 'asked', call: 1, at: AT, questions: [] })).toEqual({
       ok: false,
       problem: '"questions" has 0 items, and it holds 1 to 4',
     });
+    expect(writeEntry({ kind: 'done', call: 0, at: AT })).toEqual({ ok: false, problem: '"call" isn\'t a whole number from 1' });
+  });
+
+  test('every entry keeps the call that wrote it, and the calls of a log read back as written', () => {
+    const read = readLog(log(SESSION));
+    expect(read.ok && read.value.map((entry) => entry.call)).toEqual([1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 6]);
+    expect(readLog(line({ kind: 'done', call: 40_000, at: AT }))).toMatchObject({ ok: true, value: [{ call: 40_000 }] });
   });
 });
 
 /** An asked entry's line whose one question ends with `fields`. */
 const question = (fields: string): string =>
-  `{"kind":"asked","at":"${AT}","questions":[{"id":"q1","slots":["problem"],"text":"Why?",${fields}}]}`;
+  `{"kind":"asked","call":1,"at":"${AT}","questions":[{"id":"q1","slots":["problem"],"text":"Why?",${fields}}]}`;
 
 /** An answered entry's line whose updates are `fields`. */
 const update = (fields: string): string =>
-  `{"kind":"answered","at":"${AT}","answers":[{"question":"q1","text":"Yes."}],"updates":[${fields}]}`;
+  `{"kind":"answered","call":1,"at":"${AT}","answers":[{"question":"q1","text":"Yes."}],"updates":[${fields}]}`;
 
 describe('a malformed entry is refused with its line number', () => {
-  const DONE = `{"kind":"done","at":"${AT}"}`;
+  const DONE = `{"kind":"done","call":1,"at":"${AT}"}`;
 
   test.each([
     ['not JSON', '{"kind":"done"', "the line isn't JSON"],
     ['an empty line', '', 'the line is empty'],
     ['a list', '[]', "the entry isn't an object"],
     ['a string', '"done"', "the entry isn't an object"],
-    ['an unknown kind', `{"kind":"asks","at":"${AT}"}`, '"kind" is "asks", which isn\'t one of asked, answered,'],
+    ['an unknown kind', `{"kind":"asks","call":1,"at":"${AT}"}`, '"kind" is "asks", which isn\'t one of asked, answered,'],
     ['no kind', `{"at":"${AT}"}`, '"kind" is missing'],
-    ['no time', '{"kind":"done"}', 'the entry has no "at"'],
-    ['a blank time', '{"kind":"done","at":" "}', '"at" isn\'t text'],
-    ['an extra field', `{"kind":"done","at":"${AT}","by":"rob"}`, 'the entry has a field it shouldn\'t: "by"'],
-    ['no questions', `{"kind":"asked","at":"${AT}","questions":[]}`, '"questions" has 0 items, and it holds 1 to 4'],
+    ['no call', `{"kind":"done","at":"${AT}"}`, 'the entry has no "call"'],
+    ['a call of 0', `{"kind":"done","call":0,"at":"${AT}"}`, '"call" isn\'t a whole number from 1'],
+    ['a negative call', `{"kind":"done","call":-1,"at":"${AT}"}`, '"call" isn\'t a whole number from 1'],
+    ['a fractional call', `{"kind":"done","call":1.5,"at":"${AT}"}`, '"call" isn\'t a whole number from 1'],
+    ['a call as text', `{"kind":"done","call":"1","at":"${AT}"}`, '"call" isn\'t a whole number from 1'],
+    ['a null call', `{"kind":"done","call":null,"at":"${AT}"}`, '"call" isn\'t a whole number from 1'],
+    ['no time', '{"kind":"done","call":1}', 'the entry has no "at"'],
+    ['a blank time', '{"kind":"done","call":1,"at":" "}', '"at" isn\'t text'],
+    ['an extra field', `{"kind":"done","call":1,"at":"${AT}","by":"rob"}`, 'the entry has a field it shouldn\'t: "by"'],
+    ['no questions', `{"kind":"asked","call":1,"at":"${AT}","questions":[]}`, '"questions" has 0 items, and it holds 1 to 4'],
     [
       'five questions',
-      `{"kind":"asked","at":"${AT}","questions":[${Array.from({ length: 5 }, (_, n) => `{"id":"q${n}","slots":["problem"],"text":"Why?","options":[],"recommended":null}`).join(',')}]}`,
+      `{"kind":"asked","call":1,"at":"${AT}","questions":[${Array.from({ length: 5 }, (_, n) => `{"id":"q${n}","slots":["problem"],"text":"Why?","options":[],"recommended":null}`).join(',')}]}`,
       '"questions" has 5 items, and it holds 1 to 4',
     ],
     ['a question with no slots', question('"options":[],"recommended":null').replace('["problem"]', '[]'), '"questions"[0].slots has 0 items'],
@@ -125,16 +140,16 @@ describe('a malformed entry is refused with its line number', () => {
     ['an id with a space', question('"options":[],"recommended":null').replace('"q1"', '"q 1"'), '"questions"[0].id has a space in it'],
     [
       'two questions with one id',
-      `{"kind":"asked","at":"${AT}","questions":[${['a', 'b'].map((text) => `{"id":"q1","slots":["problem"],"text":"${text}","options":[],"recommended":null}`).join(',')}]}`,
+      `{"kind":"asked","call":1,"at":"${AT}","questions":[${['a', 'b'].map((text) => `{"id":"q1","slots":["problem"],"text":"${text}","options":[],"recommended":null}`).join(',')}]}`,
       '"questions" names "q1" twice',
     ],
-    ['no answers', `{"kind":"answered","at":"${AT}","answers":[],"updates":[]}`, '"answers" has 0 items, and it holds at least 1'],
+    ['no answers', `{"kind":"answered","call":1,"at":"${AT}","answers":[],"updates":[]}`, '"answers" has 0 items, and it holds at least 1'],
     [
       'two answers to one question',
-      `{"kind":"answered","at":"${AT}","answers":[{"question":"q1","text":"a"},{"question":"q1","text":"b"}],"updates":[]}`,
+      `{"kind":"answered","call":1,"at":"${AT}","answers":[{"question":"q1","text":"a"},{"question":"q1","text":"b"}],"updates":[]}`,
       '"answers" names "q1" twice',
     ],
-    ['a blank answer', `{"kind":"answered","at":"${AT}","answers":[{"question":"q1","text":"  "}],"updates":[]}`, '"answers"[0].text isn\'t text'],
+    ['a blank answer', `{"kind":"answered","call":1,"at":"${AT}","answers":[{"question":"q1","text":"  "}],"updates":[]}`, '"answers"[0].text isn\'t text'],
     ['an unknown status', update('{"slot":"problem","status":"done","value":["x"]}'), '"updates"[0].status is "done", which isn\'t one of clear, partial, missing'],
     ['a Missing slot with a value', update('{"slot":"problem","status":"missing","value":["x"]}'), 'must be empty exactly when the status is missing'],
     ['a Clear slot with no value', update('{"slot":"problem","status":"clear","value":[]}'), 'must be empty exactly when the status is missing'],
@@ -144,13 +159,13 @@ describe('a malformed entry is refused with its line number', () => {
       update('{"slot":"problem","status":"partial","value":["x"]},{"slot":"problem","status":"clear","value":["y"]}'),
       '"updates" names "problem" twice',
     ],
-    ['an unknown work', `{"kind":"classified","at":"${AT}","work":"app","size":"small"}`, '"work" is "app", which isn\'t one of product, feature, library, game, content, event'],
-    ['an unknown size', `{"kind":"classified","at":"${AT}","work":"game","size":"huge"}`, '"size" is "huge", which isn\'t one of tiny, small, medium, large'],
-    ['a draft with no chunks', `{"kind":"drafted","at":"${AT}","chunks":[]}`, '"chunks" has 0 items'],
-    ['a negative chunk', `{"kind":"passed","at":"${AT}","chunk":-1}`, '"chunk" isn\'t a whole number'],
-    ['a fractional chunk', `{"kind":"passed","at":"${AT}","chunk":1.5}`, '"chunk" isn\'t a whole number'],
-    ['a chunk as text', `{"kind":"passed","at":"${AT}","chunk":"1"}`, '"chunk" isn\'t a whole number'],
-    ['a blank correction', `{"kind":"corrected","at":"${AT}","chunk":0,"text":"","items":[],"updates":[]}`, '"text" isn\'t text'],
+    ['an unknown work', `{"kind":"classified","call":1,"at":"${AT}","work":"app","size":"small"}`, '"work" is "app", which isn\'t one of product, feature, library, game, content, event'],
+    ['an unknown size', `{"kind":"classified","call":1,"at":"${AT}","work":"game","size":"huge"}`, '"size" is "huge", which isn\'t one of tiny, small, medium, large'],
+    ['a draft with no chunks', `{"kind":"drafted","call":1,"at":"${AT}","chunks":[]}`, '"chunks" has 0 items'],
+    ['a negative chunk', `{"kind":"passed","call":1,"at":"${AT}","chunk":-1}`, '"chunk" isn\'t a whole number'],
+    ['a fractional chunk', `{"kind":"passed","call":1,"at":"${AT}","chunk":1.5}`, '"chunk" isn\'t a whole number'],
+    ['a chunk as text', `{"kind":"passed","call":1,"at":"${AT}","chunk":"1"}`, '"chunk" isn\'t a whole number'],
+    ['a blank correction', `{"kind":"corrected","call":1,"at":"${AT}","chunk":0,"text":"","items":[],"updates":[]}`, '"text" isn\'t text'],
   ])('%s', (_name, bad, problem) => {
     const found = refusal(DONE, DONE, bad, DONE);
     expect(found?.line).toBe(3);

@@ -13,7 +13,7 @@ step boundaries. The antidote to "my plan got lost in the noise."
 
 # Build log: The core and the first interview
 
-**Current step:** 3 — feat(turn): run one pure turn from intake to accepted
+**Current step:** 14 — feat(brief): stamp each log entry with the call that wrote it
 **Heavy check:** checkride (set a "check" key in .plumbbob/settings.json to override)
 
 ## Steps
@@ -25,7 +25,7 @@ check green + checkpoint taken, via `/plumbbob:verify` or `/plumbbob:build`.)*
 
 - ☑ 1. feat(brief): add the brief, its slot board and the answers log
 - ☑ 2. feat(scheduler): pick the next questions by impact × uncertainty
-- ☐ 3. feat(turn): run one pure turn from intake to accepted
+- ☑ 3. feat(turn): run one pure turn from intake to accepted
 - ☐ 4. feat(keyframes): run keyframes check on a staged draft
 - ☐ 5. feat(emit): emit the keyframes draft and cut it for playback
 - ☐ 6. feat(store): keep each interview's session files on disk
@@ -36,12 +36,15 @@ check green + checkpoint taken, via `/plumbbob:verify` or `/plumbbob:build`.)*
 - ☐ 11. feat(cli): run one interview turn from the command line
 - ☐ 12. feat(front): drive the first interview from the Claude Code skill
 - ☐ 13. docs(research): record the keyframes redraft against the original
+- ☐ 14. feat(brief): stamp each log entry with the call that wrote it
 
 ## Park list
 
 > Mid-step, every new problem / idea / "ooh what if" lands HERE, untouched, and you
 > go straight back to the step. Acting the instant an idea arrives is the disease.
 > Capture is one line (`/plumbbob:park` composes it). Harvest happens only at the boundary.
+
+- [x] Stamp each answers.jsonl entry with the number of the storyboard turn call that wrote it, so the log stays one line per event but groups into one exchange per call (the range 1 stop's call on D11)
 
 ## Harvest  *(run `/plumbbob:harvest` at each step boundary, after green)*
 
@@ -59,7 +62,8 @@ from sprawling across branches.
 
 Harvest results this boundary:
 
-- (none yet)
+- 2026-10-28, at range 1 of 4's stop: 1 parked idea, classified.
+- **blocker**: park 1 · Stamp each answers.jsonl entry with the number of the storyboard turn call that wrote it, so the log stays one line per event but groups into one exchange per call (the range 1 stop's call on D11) → D11 as landed is bent, and the log format must settle before the store and the flow write it
 
 ## Log
 
@@ -158,3 +162,114 @@ folder, so it rides the branch into the PR.)*
   **4.** I fixed step 1's links in the build log
 
   Step 1's detail linked to `intent.md` relative to `.plumbbob/`, and the checkpoint moved that text into the build log, so `links` failed. I pointed those two links at `intent.md`, and from now on the detail file cites decisions by slug without links. This step's commit includes that build-log change, outside the seam.
+
+- 2026-10-28 — step 3 checkpointed · 7759c48c1 — feat(turn): run one pure turn from intake to accepted (1 drift, 4m)
+
+  **Summary**: `src/turn.ts` runs the interview as a pure state machine. A turn takes the session and one event and returns the log entry it adds and the session after it, whose next step is one of intake, answer, classify, ask, draft, play, accept, accepted or no planner. `resume` rebuilds a session by taking each log entry as the turn that wrote it, so the same entries give the same brief and the same next step. 45 tests drive whole sessions with scripted events and no I/O.
+
+  1. A few protocol calls the plan leaves open are made here, for the stop to review
+  2. "Reopens the slots it touches" works through the model's updates, not the core
+  3. The turn checks what the flow hands it, so the caps hold whatever a model returns
+  4. Two small edits outside the seam
+
+  **Readout**:
+
+  ```text
+  check        green: 10 of 10 checks
+  done-when    met
+  decisions    5 of 5 honored
+  constraints  9 of 9 honored
+  seam         strayed: 3 paths outside the seam
+               - src/__tests__/scheduler.test.ts
+               - src/brief/index.ts
+               - src/scheduler.ts
+  diff         +691 -8 across 6 files
+               - docs/architecture.md +2 -2
+               - src/__tests__/scheduler.test.ts +4 -4
+               - src/__tests__/turn.test.ts +374 -0
+               - src/brief/index.ts +1 -0
+               - src/scheduler.ts +2 -2
+               - src/turn.ts +308 -0
+  spent        4 min · 5s gate · green first run
+  ```
+
+  **Verdict**: ◐ A hair off (seam strayed)
+
+  **Recommendation**: Land it, and with it the range. The stop card then reviews the core as a whole.
+
+  **1.** A few protocol calls the plan leaves open are made here, for the stop to review
+
+  A round closes on its first answer, and any question left unanswered drops. The scheduler can ask about that slot again, and the new question counts against the lens's cap. "Done" is taken in an asking turn, so it's refused during intake, before the work is classified, because a tiny check can't be skipped. A correction is also taken at the accept: it's keyed to the last chunk played and sends the draft back, which gives a refused accept a way forward (D4 (clean-to-accept), D18 (open-becomes-question)). A redraft that changes no chunk plays back whole, not empty.
+
+  **2.** "Reopens the slots it touches" works through the model's updates, not the core
+
+  D16 (model-sets-status) has the core apply each status without judging it, so a correction reopens a slot only when `interpret` reads it as Partial or Missing. The test does exactly that, taking `decisions` from Clear to Partial. A redraft gets the draft it replaces and the corrections made on it, word for word. I read "every correction" in D19 (corrections-as-entries) as every correction on that draft, since earlier ones are already in it.
+
+  **3.** The turn checks what the flow hands it, so the caps hold whatever a model returns
+
+  A phrased round may ask only about the slots the scheduler picked, one question a slot, so it can't exceed C9 (caps). Intake's questions must be open, at most three, and about the first lens (C8 (broad-then-narrow)). Every entry the turn returns has been written and read back through the log's codec, so it's exactly the line the store will append. `resume` refuses an entry that couldn't have come when it did, naming its line.
+
+  **4.** Two small edits outside the seam
+
+  `src/brief/index.ts` now re-exports `Read`. I renamed the scheduler's result type from `Next` to `Scheduled`, because fallow refuses two exports with one name.
+
+- 2026-10-28 — range 1 of 4's stop recorded — review the core (the brief, its board and log, the scheduler and the turn) before anything touches a model
+
+  **Summary**: The pure core is in, with 179 new unit tests and no I/O. `src/brief/` reads a lens table's row into a typed slot, keeps the answers log as validated JSON lines, replays it into the slot board and renders `brief.md`. `src/scheduler.ts` picks each round by impact × uncertainty under the caps and hands back every open slot as a Question at the draft. `src/turn.ts` runs the interview as a state machine from intake to accepted, and `resume` gives back the same brief and next step from the log alone.
+
+  1. Step 3 landed a hair off its seam, with two small edits to earlier steps' files
+  2. The log keeps one line per event, and each line will carry the call that wrote it
+  3. The turn makes five protocol calls the plan leaves open
+  4. The core holds the caps and the open-question contract whatever a model returns
+
+  **Readout**:
+
+  ```text
+  steps        3 of 3 landed
+               - 1 a960a56 · 2 eb19e78 · 3 7759c48
+  check        green: 10 of 10 checks, 3 landings
+  done-when    met
+  decisions    bent: D11 (log-is-truth) reads "a turn" as the core's
+               → your call: keep events, stamp each with its call; P1
+  constraints  9 of 9 honored
+  seam         strayed: 3 paths outside step 3's seam
+               - src/__tests__/scheduler.test.ts
+               - src/brief/index.ts
+               - src/scheduler.ts
+  diff         +2246 -13 across 16 files
+               - docs/architecture.md +9 -7
+               - src/__tests__/scheduler.test.ts +254 -4
+               - src/__tests__/turn.test.ts +374 -0
+               - src/brief/__tests__/board.test.ts +157 -0
+               - src/brief/__tests__/fixture.ts +86 -0
+               - src/brief/__tests__/log.test.ts +163 -0
+               - src/brief/__tests__/render.test.ts +92 -0
+               - and 9 more
+  spent        19 min · green first run at every landing · 1 drift warning
+  ```
+
+  **Verdict**: ○ Out of plumb (decisions bent)
+
+  **Harvested**: 1 of 1 parked idea open
+
+  | Park | What it is | Why it matters | Lean |
+  | --- | --- | --- | --- |
+  | P1 · Stamp entries with their call | Stamp each answers.jsonl entry with the number of the storyboard turn call that wrote it, so the log stays one line per event but groups into one exchange per call (the range 1 stop's call on D11) | the log reads as one exchange per call, and D11 holds again | blocker: D11 as landed is bent, and the log format must settle before the store and the flow write it |
+
+  **Recommendation**: Approve the review and fold P1 as a blocker: amend D11 (log-is-truth) to one line per event, each stamped with its call, and add step 14 at the head of range 2. Steps 6 and 9 are the first to write the log, so stamping it first means nothing on disk ever lacks the field.
+
+  **1.** Step 3 landed a hair off its seam, with two small edits to earlier steps' files
+
+  The turn needed `Read` from `src/brief/index.ts`, so that barrel gained one re-export. fallow refuses two exports with one name, so the scheduler's result type was renamed from `Next` to `Scheduled`, with its test following. Neither changes behavior. Step 2 also carried a fix to the build log: step 1's detail had links relative to `.plumbbob/` that broke once the checkpoint moved them into the log.
+
+  **2.** The log keeps one line per event, and each line will carry the call that wrote it
+
+  Every entry is one event: `asked`, `answered`, `classified`, `done`, `drafted`, `passed`, `corrected` or `accepted`. The turn takes one event and returns the one entry it adds, so a `storyboard turn` call that takes answers and phrases the next round appends two or three lines, where D11 (log-is-truth) and D10 (one-turn-command) read as one line per call. Your call at this stop keeps event lines, since they put each answer and its reading on disk before the next model call can fail, and stamps every entry with the number of the call that wrote it, so the log still groups into one exchange per call. That lands as P1, below: D11 amended to say so, and a new step 14 built first in range 2, before the store or the flow writes a line.
+
+  **3.** The turn makes five protocol calls the plan leaves open
+
+  A round closes on its first answer. A question left unanswered drops, and the scheduler can ask about its slot again against the cap. "Done" is refused during intake, so a tiny classification can't be skipped. A correction is taken at the accept, keyed to the last chunk played, so a refused accept (D4 (clean-to-accept)) has a way forward. A redraft that changes no chunk plays back whole. And a redraft gets the corrections made on the draft it replaces, which is my reading of "every correction" in D19 (corrections-as-entries).
+
+  **4.** The core holds the caps and the open-question contract whatever a model returns
+
+  The scheduler gives a lens at its cap no more questions and passes the round to the next lens. It answers "draft" once every slot worth asking is capped, and returns every slot that isn't Clear as an open Question, including one below the floor (D18 (open-becomes-question)). The turn refuses a phrased round that asks about a slot the scheduler didn't pick, or asks one slot twice, so phrasing can't break C9 (caps). It also refuses intake questions with a menu (C8 (broad-then-narrow)). A correction reopens a slot only through `interpret`'s update, because D16 (model-sets-status) has the core apply each status without judging it.

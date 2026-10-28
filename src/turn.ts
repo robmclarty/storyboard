@@ -1,4 +1,4 @@
-import { readLog, replay, writeEntry, type Brief, type Entry, type Question, type Read, type Slot } from './brief/index.js';
+import { readLog, replay, writeEntry, type Brief, type Entry, type Question, type Read, type Slot, type Stamp } from './brief/index.js';
 import { CAPS, schedule, type Caps, type OpenQuestion } from './scheduler.js';
 
 // One turn of the interview, as a pure step: the session so far and one event go in, and the log
@@ -11,18 +11,18 @@ import { CAPS, schedule, type Caps, type OpenQuestion } from './scheduler.js';
 type Of<K extends Entry['kind']> = Extract<Entry, { kind: K }>;
 
 /**
- * Something that happened since the last turn: an entry without its time. The turn numbers a
+ * Something that happened since the last turn: an entry without its stamp. The turn numbers a
  * playback's chunk itself, so a pass or a correction never names one.
  */
 export type Event =
-  | Omit<Of<'asked'>, 'at'>
-  | Omit<Of<'answered'>, 'at'>
-  | Omit<Of<'classified'>, 'at'>
-  | Omit<Of<'done'>, 'at'>
-  | Omit<Of<'drafted'>, 'at'>
-  | Omit<Of<'passed'>, 'at' | 'chunk'>
-  | Omit<Of<'corrected'>, 'at' | 'chunk'>
-  | Omit<Of<'accepted'>, 'at'>;
+  | Omit<Of<'asked'>, keyof Stamp>
+  | Omit<Of<'answered'>, keyof Stamp>
+  | Omit<Of<'classified'>, keyof Stamp>
+  | Omit<Of<'done'>, keyof Stamp>
+  | Omit<Of<'drafted'>, keyof Stamp>
+  | Omit<Of<'passed'>, keyof Stamp | 'chunk'>
+  | Omit<Of<'corrected'>, keyof Stamp | 'chunk'>
+  | Omit<Of<'accepted'>, keyof Stamp>;
 
 /** A correction made in playback, word for word, with the chunk it was made on. */
 type Correction = Pick<Of<'corrected'>, 'chunk' | 'text' | 'items'>;
@@ -81,6 +81,8 @@ export type Session = {
   readonly slots: readonly Slot[];
   readonly caps: Caps;
   readonly entries: readonly Entry[];
+  /** The call that wrote the last entry, or 0 before any, so the flow's next call is one more. */
+  readonly call: number;
   readonly brief: Brief;
   readonly next: Next;
   readonly phase: Phase;
@@ -243,9 +245,17 @@ const problemWith = (session: Session, event: Event): string | undefined => {
 const chunkNow = (session: Session): number =>
   session.next.kind === 'play' ? session.next.chunk : (session.phase.draft?.play.at(-1) ?? 0);
 
+/** Why an entry's call can't follow the last one: an entry comes from the same call or the next. */
+const callProblem = (last: number, call: number): string | undefined => {
+  if (call < last) {
+    return `the entry is from call ${call}, after an entry from call ${last}`;
+  }
+  return call > last + 1 ? `the entry is from call ${call}, which skips call ${last + 1}` : undefined;
+};
+
 /** Takes one entry onto the session, refusing one that can't come now. */
 const step = (session: Session, entry: Entry): Read<Session> => {
-  const problem = problemWith(session, entry);
+  const problem = callProblem(session.call, entry.call) ?? problemWith(session, entry);
   if (problem !== undefined) {
     return { ok: false, problem };
   }
@@ -258,13 +268,15 @@ const step = (session: Session, entry: Entry): Read<Session> => {
     return { ok: false, problem: brief.problem };
   }
   const phase = advance(session.phase, entry);
-  return { ok: true, value: { ...session, entries, brief: brief.value, phase, next: decide(session.slots, brief.value, phase, session.caps) } };
+  const next = decide(session.slots, brief.value, phase, session.caps);
+  return { ok: true, value: { ...session, entries, call: entry.call, brief: brief.value, phase, next } };
 };
 
 /**
  * Resumes a session from its log: every entry is taken as the turn that wrote it would have, so
- * the brief and the next step are the same as when the last one was written. An entry that
- * couldn't have come when it did is refused with its line, counting the first entry as line 1.
+ * the brief, the last call and the next step are the same as when the last one was written. An
+ * entry that couldn't have come when it did, from a call before the last entry's or one past the
+ * next, is refused with its line, counting the first entry as line 1.
  */
 export const resume = (slots: readonly Slot[], entries: readonly Entry[], caps: Caps = CAPS): Read<Session> => {
   if (slots.length === 0) {
@@ -275,7 +287,7 @@ export const resume = (slots: readonly Slot[], entries: readonly Entry[], caps: 
     return brief;
   }
   const phase: Phase = { asked: false, pending: [], done: false, draft: null, accepted: false };
-  let session: Session = { slots, caps, entries: [], brief: brief.value, phase, next: decide(slots, brief.value, phase, caps) };
+  let session: Session = { slots, caps, entries: [], call: 0, brief: brief.value, phase, next: decide(slots, brief.value, phase, caps) };
   for (const [index, entry] of entries.entries()) {
     const stepped = step(session, entry);
     if (!stepped.ok) {
@@ -287,13 +299,14 @@ export const resume = (slots: readonly Slot[], entries: readonly Entry[], caps: 
 };
 
 /**
- * Runs one turn: the event, at the time given, goes in, and the log entry it adds and the session
- * after it come out. The entry is exactly the line the log will hold. An event that can't come
- * now is refused, and the session is as it was.
+ * Runs one turn: the event, stamped with the call and the time given, goes in, and the log entry
+ * it adds and the session after it come out. The entry is exactly the line the log will hold. Every
+ * entry one call appends takes that call's number, which is the session's last call or the next
+ * one. An event that can't come now is refused, and the session is as it was.
  */
-export const turn = (session: Session, event: Event, at: string): Read<{ readonly entry: Entry; readonly session: Session }> => {
+export const turn = (session: Session, event: Event, stamp: Stamp): Read<{ readonly entry: Entry; readonly session: Session }> => {
   const written = writeEntry(
-    event.kind === 'passed' || event.kind === 'corrected' ? { ...event, at, chunk: chunkNow(session) } : { ...event, at },
+    event.kind === 'passed' || event.kind === 'corrected' ? { ...event, ...stamp, chunk: chunkNow(session) } : { ...event, ...stamp },
   );
   if (!written.ok) {
     return written;
