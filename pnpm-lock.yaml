@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@robmclarty/keyframes':
+        specifier: 0.3.0
+        version: 0.3.0
     devDependencies:
       '@ast-grep/cli':
         specifier: 0.45.3
@@ -564,6 +568,11 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [win32]
+
+  '@robmclarty/keyframes@0.3.0':
+    resolution: {integrity: sha512-aT+K9RigYzvP5XkULXdFeDM8R/8RLmvGIqyBht7FRDA8EoIfOi6A//WZi2MlRyE+IluvH28P4S8yx2RldYm8XA==}
+    engines: {node: '>=24'}
+    hasBin: true
 
   '@rolldown/binding-android-arm-eabi@1.2.15':
     resolution: {integrity: sha512-aLcgK9gIJ3YRvrrtfSBbRa27F5WrpiTaPulnFpsHPxpUHgFlSgnU4854MHwoRGEBhfRJDWCS2WQ7lIjskE9Olw==}
@@ -1944,6 +1953,8 @@ snapshots:
 
   '@oxlint/binding-win32-x64-msvc@1.87.0':
     optional: true
+
+  '@robmclarty/keyframes@0.3.0': {}
 
   '@rolldown/binding-android-arm-eabi@1.2.15':
     optional: true

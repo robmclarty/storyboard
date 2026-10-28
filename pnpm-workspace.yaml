@@ -7,8 +7,9 @@ allowBuilds:
   fallow: true
 
 # The global minimumReleaseAge (48h) blunts a third-party registry compromise.
-# checkride and fascicle are first-party, published from repos on this machine,
-# so the quarantine buys nothing and only delays adopting a fix.
+# checkride, fascicle and keyframes are first-party, published from repos on
+# this machine, so the quarantine buys nothing and only delays adopting a fix.
 minimumReleaseAgeExclude:
   - checkride
   - fascicle
+  - '@robmclarty/keyframes'

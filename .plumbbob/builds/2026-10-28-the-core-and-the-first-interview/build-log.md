@@ -13,7 +13,7 @@ step boundaries. The antidote to "my plan got lost in the noise."
 
 # Build log: The core and the first interview
 
-**Current step:** 14 — feat(brief): stamp each log entry with the call that wrote it
+**Current step:** 4 — feat(keyframes): run keyframes check on a staged draft
 **Heavy check:** checkride (set a "check" key in .plumbbob/settings.json to override)
 
 ## Steps
@@ -36,7 +36,7 @@ check green + checkpoint taken, via `/plumbbob:verify` or `/plumbbob:build`.)*
 - ☐ 11. feat(cli): run one interview turn from the command line
 - ☐ 12. feat(front): drive the first interview from the Claude Code skill
 - ☐ 13. docs(research): record the keyframes redraft against the original
-- ☐ 14. feat(brief): stamp each log entry with the call that wrote it
+- ☑ 14. feat(brief): stamp each log entry with the call that wrote it
 
 ## Park list
 
@@ -273,3 +273,53 @@ folder, so it rides the branch into the PR.)*
   **4.** The core holds the caps and the open-question contract whatever a model returns
 
   The scheduler gives a lens at its cap no more questions and passes the round to the next lens. It answers "draft" once every slot worth asking is capped, and returns every slot that isn't Clear as an open Question, including one below the floor (D18 (open-becomes-question)). The turn refuses a phrased round that asks about a slot the scheduler didn't pick, or asks one slot twice, so phrasing can't break C9 (caps). It also refuses intake questions with a menu (C8 (broad-then-narrow)). A correction reopens a slot only through `interpret`'s update, because D16 (model-sets-status) has the core apply each status without judging it.
+
+- 2026-10-28 — step 14 checkpointed · 159a9ab93 — feat(brief): stamp each log entry with the call that wrote it (1 drift, 3m)
+
+  **Summary**: Every line of the answers log now carries `call`, the number of the `storyboard turn` call that wrote it, counting from 1. The codec refuses a call that isn't a whole number from 1 and names its line. `turn` takes the call with the time as one stamp, and the session gives the last call. The turn and `resume` both refuse a call that steps back or skips one. Grouped by call, a whole test session gives one exchange per call.
+
+  1. The call and the time travel together as the entry's stamp
+  2. The core checks the order of calls, not where a call should end
+  3. The session test numbers calls the way the flow will
+  4. One line outside the seam, and one message reworded
+
+  **Readout**:
+
+  ```text
+  check        green: 10 of 10 checks
+  done-when    met
+  decisions    2 of 2 honored
+  constraints  9 of 9 honored
+  seam         strayed: 1 path outside the seam
+               → src/__tests__/scheduler.test.ts
+  diff         +253 -120 across 10 files
+               - docs/architecture.md +4 -2
+               - src/__tests__/scheduler.test.ts +1 -0
+               - src/__tests__/turn.test.ts +90 -8
+               - src/brief/__tests__/board.test.ts +8 -5
+               - src/brief/__tests__/fixture.ts +11 -6
+               - src/brief/__tests__/log.test.ts +39 -24
+               - src/brief/__tests__/render.test.ts +2 -1
+               - and 3 more
+  spent        3 min · 2s gate · green first run
+  ```
+
+  **Verdict**: ◐ A hair off (seam strayed)
+
+  **Recommendation**: Land it and go on to step 4. Steps 6 and 9 are the first to write the log, so every line they write will carry its call from the start.
+
+  **1.** The call and the time travel together as the entry's stamp
+
+  `Stamp` is `{ call, at }`, and `Entry` is a stamp joined to the event's own fields, so every kind carries both and the codec reads them in one place. A line is written `kind`, `call`, `at`, then the event's fields. `turn(session, event, stamp)` replaces the bare time it took before. `session.call` is the call that wrote the last entry, or 0 before any, so the flow's next call is one more.
+
+  **2.** The core checks the order of calls, not where a call should end
+
+  An entry's call must be the session's last or the one after it. The check runs in the step that both `turn` and `resume` share, so a live turn and a replayed log refuse the same entries, and `resume` names the line. The core doesn't require a call to end on something for the person. If a model call fails after the answers are written, the next call picks up where it stopped, and that is the reason for one line per event (D11 (log-is-truth)).
+
+  **3.** The session test numbers calls the way the flow will
+
+  The test helper starts a new call each time the session hands back to the person (questions, a chunk, the accept, or the end) and keeps the call while the flow carries on. Grouped by call, the whole session gives nine exchanges: intake's questions; the answers, the classification and the next round; and so on down to the accept. Each exchange ends on what the person sees next. Separate tests cover a turn taking the last call or the next one, and refusing one before the last or past the next, including a first entry from call 2.
+
+  **4.** One line outside the seam, and one message reworded
+
+  `src/__tests__/scheduler.test.ts` builds an asked entry by hand, so it gained `call: 1`, because the type requires it. The call and the chunk index now share one reader, so a bad chunk reads "isn't a whole number from 0".
