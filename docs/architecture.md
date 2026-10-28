@@ -85,7 +85,7 @@ A ring may import any ring below it. An edge imports only the core, never anothe
 
 | Module | Ring | Owns | Build step |
 | --- | --- | --- | --- |
-| `brief` | core | The record: `brief.md` as a typed brief, the slot board (Clear, Partial, Missing), and the answers log's entries | 1 |
+| `brief` | core | The record: each lens's slots as typed slots, the answers log's entries, their replay into the slot board (Clear, Partial, Missing), and `brief.md` rendered from it | 1 |
 | `scheduler` | core | The next lens and its questions, by impact × uncertainty; the caps per round and per lens; the stopping rule | 1 |
 | `turn` | core | One step: the brief and an answer go in, an updated brief and the next questions come out | 1, 2 |
 | `emit` | core | The emitters: `keyframes.md`, `spec.md`, design tokens and tiles, `architecture.md`; drafts cut into playback chunks | 2, 4–6 |
@@ -104,7 +104,7 @@ A ring may import any ring below it. An edge imports only the core, never anothe
 | `index` | shell | The package's public surface | now |
 
 Build steps are the sketch's [build order](specs/initial_sketch.md#build-order-when-its-time).
-Only `cli` and `index` exist so far; every other module is created by the step that needs it.
+Only `cli`, `index` and `brief` exist so far; every other module is created by the step that needs it.
 
 ### What each ring may do
 
@@ -166,8 +166,10 @@ In the project being planned, during the interview:
 
 ```text
 .storyboard/<slug>/
-  brief.md       every slot, its status and its value
-  (answers log)  each question and answer, appended, never rewritten
+  answers.jsonl  one JSON line per turn of the core: what was asked, the answers word for word,
+                 the slot updates read from them, and the draft's playback; appended, never rewritten
+  brief.md       every slot, its status and its value, rendered from the log every turn and never
+                 read back
 ```
 
 On acceptance, the emitted files go where their readers expect them: `keyframes.md` at the root,
