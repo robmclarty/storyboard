@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import { readSlot, replay, type Brief, type Entry, type Question, type Slot } from '../brief/index.js';
-import { CAPS, schedule, score, type Next } from '../scheduler.js';
+import { CAPS, schedule, score, type Scheduled } from '../scheduler.js';
 
 type Status = Brief['slots'][number]['status'];
 
@@ -43,7 +43,7 @@ const brief = (rows: readonly Row[], asks: Readonly<Record<string, number>> = {}
 });
 
 /** What the scheduler picks for a brief, with the plan's caps unless others are given. */
-const next = (of: Brief, { done = false, caps = CAPS } = {}): Next => schedule(of, { done, caps });
+const next = (of: Brief, { done = false, caps = CAPS } = {}): Scheduled => schedule(of, { done, caps });
 
 describe('score', () => {
   test.each([
@@ -63,7 +63,7 @@ describe('score', () => {
 });
 
 describe('schedule: what to ask', () => {
-  test.each<readonly [string, readonly Row[], Next]>([
+  test.each<readonly [string, readonly Row[], Scheduled]>([
     [
       'the highest score is asked first',
       [
@@ -138,7 +138,7 @@ describe('schedule: what to ask', () => {
   const SIX: readonly Row[] = ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => ['frame', id, '3', 'missing'] as const);
   const TWO_LENSES: readonly Row[] = [...SIX, ['intent', 'x', '1', 'missing']];
 
-  test.each<readonly [string, Readonly<Record<string, number>>, Next]>([
+  test.each<readonly [string, Readonly<Record<string, number>>, Scheduled]>([
     ['a lens with three asked has room for two', { frame: 3 }, { kind: 'ask', lens: 'frame', slots: ['a', 'b'] }],
     ['a lens with four asked has room for one', { frame: 4 }, { kind: 'ask', lens: 'frame', slots: ['a'] }],
     ['a lens asked five times is passed over for the next', { frame: 5 }, { kind: 'ask', lens: 'intent', slots: ['x'] }],

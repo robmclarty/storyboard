@@ -36,7 +36,7 @@ export type OpenQuestion = {
 };
 
 /** What comes next: a round about one lens's slots, highest score first, or the draft. */
-export type Next =
+export type Scheduled =
   | { readonly kind: 'ask'; readonly lens: string; readonly slots: readonly string[] }
   | { readonly kind: 'draft'; readonly open: readonly OpenQuestion[] };
 
@@ -67,7 +67,7 @@ const openQuestions = (brief: Brief): readonly OpenQuestion[] =>
  * said done, or no slot under a cap is worth asking about, it answers "draft" with every slot
  * still open.
  */
-export const schedule = (brief: Brief, { done, caps }: { readonly done: boolean; readonly caps: Caps }): Next => {
+export const schedule = (brief: Brief, { done, caps }: { readonly done: boolean; readonly caps: Caps }): Scheduled => {
   const lenses = [...new Set(brief.slots.map((state) => state.slot.lens))];
   const asked = askedByLens(brief);
   const room = (lens: string): number => Math.min(caps.round, caps.lens - (asked.get(lens) ?? 0));

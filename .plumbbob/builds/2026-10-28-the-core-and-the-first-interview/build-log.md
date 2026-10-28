@@ -13,7 +13,7 @@ step boundaries. The antidote to "my plan got lost in the noise."
 
 # Build log: The core and the first interview
 
-**Current step:** 2 — feat(scheduler): pick the next questions by impact × uncertainty
+**Current step:** 3 — feat(turn): run one pure turn from intake to accepted
 **Heavy check:** checkride (set a "check" key in .plumbbob/settings.json to override)
 
 ## Steps
@@ -24,7 +24,7 @@ line above. Only ONE step is in flight; a step is done only after a checkpoint:
 check green + checkpoint taken, via `/plumbbob:verify` or `/plumbbob:build`.)*
 
 - ☑ 1. feat(brief): add the brief, its slot board and the answers log
-- ☐ 2. feat(scheduler): pick the next questions by impact × uncertainty
+- ☑ 2. feat(scheduler): pick the next questions by impact × uncertainty
 - ☐ 3. feat(turn): run one pure turn from intake to accepted
 - ☐ 4. feat(keyframes): run keyframes check on a staged draft
 - ☐ 5. feat(emit): emit the keyframes draft and cut it for playback
@@ -114,3 +114,47 @@ folder, so it rides the branch into the PR.)*
   **3.** Replay also refuses what the brief so far rules out
 
   Replay refuses an answer to a question nobody asked, an update or question naming a slot no lens has, a question asked twice, and a question spanning two lenses. Each refusal names its line. The last one keeps each lens's question count well defined for the cap in step 2.
+
+- 2026-10-28 — step 2 checkpointed · eb19e785f — feat(scheduler): pick the next questions by impact × uncertainty (2m)
+
+  **Summary**: `src/scheduler.ts` picks the next round or says it's time to draft. A slot's score is its impact times its uncertainty, a slot is worth asking while that's at least 1, and a round asks the lens holding the top slot, up to four questions and five per lens, with both caps passed in. On "draft" it returns every slot that isn't Clear as an open Question with its latest default. 33 table-driven tests cover it.
+
+  1. A lens at its cap is passed over, and the top slot is taken from the lenses left
+  2. A round names slots, one question each, so phrasing can't break the caps
+  3. Every open slot becomes a Question at the draft, even one below the floor
+  4. I fixed step 1's links in the build log
+
+  **Readout**:
+
+  ```text
+  check        green: 10 of 10 checks
+  done-when    met
+  decisions    3 of 3 honored
+  constraints  9 of 9 honored
+  seam         held: 3 of 3 declared, no strays
+  diff         +342 -1 across 3 files
+               - docs/architecture.md +1 -1
+               - src/__tests__/scheduler.test.ts +250 -0
+               - src/scheduler.ts +91 -0
+  spent        2 min · 2s gate · green first run
+  ```
+
+  **Verdict**: ● Plumb
+
+  **Recommendation**: Land it and go on to step 3. The turn calls `schedule` with the board and the done flag, and passes `CAPS` unless the flow changes them.
+
+  **1.** A lens at its cap is passed over, and the top slot is taken from the lenses left
+
+  "The one holding the top slot" counts only lenses with room under their cap. When the best slot's lens has had its five questions, the round goes to the best slot in another lens, and once every slot worth asking is in a capped lens, the scheduler answers "draft". That's how C9 (caps) and C5 (open-not-guessed) meet: a slot open at the cap is drafted as a Question, never asked a sixth time. A round's size is the smallest of the round cap, the lens's room and its slots worth asking.
+
+  **2.** A round names slots, one question each, so phrasing can't break the caps
+
+  The round returns slot ids in score order. The contract for phrasing is at most one question per slot, so a round of four slots can't become five questions. Each question counts once against its lens, however many slots it names, which is how intake's three questions use up three of the frame lens's five (D17 (intake-counts)).
+
+  **3.** Every open slot becomes a Question at the draft, even one below the floor
+
+  D18 (open-becomes-question) says every slot not Clear at draft time becomes a Question, so the open list includes a Partial slot of impact 1, which was never worth asking. Each open Question carries `section: 'questions'` whatever its slot lands in, so a slot bound for Decisions can't come back as a guessed Decision. The list keeps the board's order.
+
+  **4.** I fixed step 1's links in the build log
+
+  Step 1's detail linked to `intent.md` relative to `.plumbbob/`, and the checkpoint moved that text into the build log, so `links` failed. I pointed those two links at `intent.md`, and from now on the detail file cites decisions by slug without links. This step's commit includes that build-log change, outside the seam.
