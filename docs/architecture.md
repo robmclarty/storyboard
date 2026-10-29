@@ -96,7 +96,7 @@ A ring may import any ring below it. An edge imports only the core, never anothe
 | `repo` | edge | Reads a project, its docs, its decisions and the shape of its code, into a summary with sources | 3 |
 | `keyframes` | edge | The only subprocess: `keyframes check --strict --json` on each staged plan, run from storyboard's own dependency, giving the exit code, the counts and the findings, or no verdict | 2 |
 | `intake` | wiring | The three open questions, then the work's kind and size, which decide the lenses and the ceremony | 2 |
-| `lens` | wiring | Loads a lens from [`lenses/`](../lenses/README.md) | 2 |
+| `lens` | wiring | Loads a lens from [`lenses/`](../lenses/README.md): its slots, what makes each one Clear, its question bank and its drafting rubric, refusing a lens that doesn't read with its file and line | 2 |
 | `draft` | wiring | Drafts every artifact from the brief; later, samples competing drafts to find what to ask | 2, 7 |
 | `flow` | wiring | The fascicle flow that runs the loop | 2 |
 | `cli` | shell | The `storyboard` command, which the bin runs | now |
@@ -104,7 +104,7 @@ A ring may import any ring below it. An edge imports only the core, never anothe
 | `index` | shell | The package's public surface | now |
 
 Build steps are the sketch's [build order](specs/initial_sketch.md#build-order-when-its-time).
-Only `cli`, `index`, `brief`, `scheduler`, `turn`, `emit`, `keyframes` and `store` exist so far; every other module is created by the step that needs it.
+Only `cli`, `index`, `brief`, `scheduler`, `turn`, `emit`, `keyframes`, `store` and `lens` exist so far; every other module is created by the step that needs it.
 
 ### What each ring may do
 

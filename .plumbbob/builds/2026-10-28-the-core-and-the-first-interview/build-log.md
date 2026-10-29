@@ -13,7 +13,7 @@ step boundaries. The antidote to "my plan got lost in the noise."
 
 # Build log: The core and the first interview
 
-**Current step:** 6 — feat(store): keep each interview's session files on disk
+**Current step:** 7 — feat(lenses): write the frame and intent lenses and load them
 **Heavy check:** checkride (set a "check" key in .plumbbob/settings.json to override)
 
 ## Steps
@@ -28,7 +28,7 @@ check green + checkpoint taken, via `/plumbbob:verify` or `/plumbbob:build`.)*
 - ☑ 3. feat(turn): run one pure turn from intake to accepted
 - ☑ 4. feat(keyframes): run keyframes check on a staged draft
 - ☑ 5. feat(emit): emit the keyframes draft and cut it for playback
-- ☐ 6. feat(store): keep each interview's session files on disk
+- ☑ 6. feat(store): keep each interview's session files on disk
 - ☐ 7. feat(lenses): write the frame and intent lenses and load them
 - ☐ 8. feat(models): reach the local and frontier models through fascicle
 - ☐ 9. feat(flow): run intake and the asking turns through the models
@@ -429,3 +429,5 @@ folder, so it rides the branch into the PR.)*
   **5.** Budgets stay keyframes' to enforce, and I parked a note for step 8
 
   The integration fixture first failed on `over-budget`: an item over 60 words fails `--strict`. That's about content, and D18 (open-becomes-question) has the playback show it, so the emitter doesn't trim. I parked P2 to give the draft model keyframes' budgets in its prompt.
+
+- 2026-10-29 — step 6 checkpointed · e711f3ddd — feat(store): keep each interview's session files on disk (2m)
