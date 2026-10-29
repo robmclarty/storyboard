@@ -88,7 +88,7 @@ A ring may import any ring below it. An edge imports only the core, never anothe
 | `brief` | core | The record: each lens's slots as typed slots, the answers log's entries, their replay into the slot board (Clear, Partial, Missing), and `brief.md` rendered from it | 1 |
 | `scheduler` | core | The next lens and its questions, by impact × uncertainty; the caps per round and per lens; the stopping rule | 1 |
 | `turn` | core | One step: the session and one event go in; the log entry it adds, the brief after it and what comes next come out, from intake to accepted | 1, 2 |
-| `emit` | core | The emitters: `keyframes.md`, `spec.md`, design tokens and tiles, `architecture.md`; drafts cut into playback chunks | 2, 4–6 |
+| `emit` | core | The emitters: `keyframes.md` from a draft's Intent and items, in keyframes' usual form, so far, then `spec.md`, design tokens and tiles, `architecture.md`; drafts cut into playback chunks of one section and 30 lines at most | 2, 4–6 |
 | `adapters` | core | Templates over the brief for volley, plumbbob, runciter and ridgeline. Not model calls | 4 |
 | `place` | core | For an existing project, each item's placement (core, part or log) and a reason; the plan's budgets | 3 |
 | `models` | edge | The only door to a model: the local one and the frontier one, through fascicle | 2 |
@@ -104,7 +104,7 @@ A ring may import any ring below it. An edge imports only the core, never anothe
 | `index` | shell | The package's public surface | now |
 
 Build steps are the sketch's [build order](specs/initial_sketch.md#build-order-when-its-time).
-Only `cli`, `index`, `brief`, `scheduler`, `turn` and `keyframes` exist so far; every other module is created by the step that needs it.
+Only `cli`, `index`, `brief`, `scheduler`, `turn`, `emit` and `keyframes` exist so far; every other module is created by the step that needs it.
 
 ### What each ring may do
 

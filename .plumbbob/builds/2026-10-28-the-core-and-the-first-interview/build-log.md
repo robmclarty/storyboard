@@ -13,7 +13,7 @@ step boundaries. The antidote to "my plan got lost in the noise."
 
 # Build log: The core and the first interview
 
-**Current step:** 4 — feat(keyframes): run keyframes check on a staged draft
+**Current step:** 5 — feat(emit): emit the keyframes draft and cut it for playback
 **Heavy check:** checkride (set a "check" key in .plumbbob/settings.json to override)
 
 ## Steps
@@ -26,7 +26,7 @@ check green + checkpoint taken, via `/plumbbob:verify` or `/plumbbob:build`.)*
 - ☑ 1. feat(brief): add the brief, its slot board and the answers log
 - ☑ 2. feat(scheduler): pick the next questions by impact × uncertainty
 - ☑ 3. feat(turn): run one pure turn from intake to accepted
-- ☐ 4. feat(keyframes): run keyframes check on a staged draft
+- ☑ 4. feat(keyframes): run keyframes check on a staged draft
 - ☐ 5. feat(emit): emit the keyframes draft and cut it for playback
 - ☐ 6. feat(store): keep each interview's session files on disk
 - ☐ 7. feat(lenses): write the frame and intent lenses and load them
@@ -45,6 +45,7 @@ check green + checkpoint taken, via `/plumbbob:verify` or `/plumbbob:build`.)*
 > Capture is one line (`/plumbbob:park` composes it). Harvest happens only at the boundary.
 
 - [x] Stamp each answers.jsonl entry with the number of the storyboard turn call that wrote it, so the log stays one line per event but groups into one exchange per call (the range 1 stop's call on D11)
+- [ ] Tell the draft model keyframes' budgets (60 words an item, 7 principles, 12 constraints, 20 decisions, 12 taste, 10 open questions, 10 ideas, 2000 words), since over-budget fails --strict and the emitter doesn't trim
 
 ## Harvest  *(run `/plumbbob:harvest` at each step boundary, after green)*
 
@@ -323,3 +324,52 @@ folder, so it rides the branch into the PR.)*
   **4.** One line outside the seam, and one message reworded
 
   `src/__tests__/scheduler.test.ts` builds an asked entry by hand, so it gained `call: 1`, because the type requires it. The call and the chunk index now share one reader, so a bad chunk reads "isn't a whole number from 0".
+
+- 2026-10-28 — step 4 checkpointed · ebc5512f8 — feat(keyframes): run keyframes check on a staged draft (3m)
+
+  **Summary**: `src/keyframes.ts` runs `keyframes check --strict --json` on a folder's plan with the bin from storyboard's own `@robmclarty/keyframes` 0.3.0, and gives back the exit code, the error, warning and note counts, and the findings. A missing plan, a run that doesn't finish and a report that doesn't read all come back as "no verdict", never a pass. Tests run the real bin on a clean plan, a broken one and a folder with no plan, and table-test the verdict reader.
+
+  1. The bin comes from the dependency's own manifest, so fallow sees the use
+  2. A report is believed only when its exit code agrees with its counts
+  3. "The counts" are the error, warning and note counts
+  4. The broken fixture shows why step 5 puts "Lean:" in the Question's own text
+
+  **Readout**:
+
+  ```text
+  check        green: 10 of 10 checks
+  done-when    met
+  decisions    3 of 3 honored
+  constraints  9 of 9 honored
+  seam         held: 7 of 8 declared, no strays
+  diff         +267 -4 across 9 files
+               - docs/architecture.md +2 -2
+               - package.json +3 -0
+               - pnpm-lock.yaml +11 -0
+               - pnpm-workspace.yaml +3 -2
+               - src/__tests__/keyframes.test.ts +71 -0
+               - src/keyframes.ts +127 -0
+               - test/fixtures/plans/broken/keyframes.md +15 -0
+               - and 2 more
+  spent        3 min · 2s gate · green first run
+  ```
+
+  **Verdict**: ● Plumb
+
+  **Recommendation**: Land it and go on to step 5. The emitter's integration test can call `check` on what it emits as soon as its fixtures exist.
+
+  **1.** The bin comes from the dependency's own manifest, so fallow sees the use
+
+  The edge imports `@robmclarty/keyframes/package.json`, resolves its `bin.keyframes` beside it, and runs it with the same `node` that runs storyboard. Nothing comes from PATH (D8 (three-deps)). Because the import is static, fallow counts the dependency as used, so `fallow.toml`'s `ignoreDependencies` didn't need it. The package joins checkride and fascicle in the release-age exemption, and it has no dependencies of its own.
+
+  **2.** A report is believed only when its exit code agrees with its counts
+
+  Exit 0 or 1 must come with a report that parses, is schema version 1, has whole-number counts and findings that read. Under `--strict`, exit 0 must mean no errors and no warnings, and exit 1 must mean some. Anything else is no verdict, with the reason: exit 2's own message (such as "there's no keyframes.md to check"), a stopped run, or a report that doesn't read. The flow can then refuse an accept on anything but a clean verdict (D4 (clean-to-accept)). The folder path is made absolute before it's passed, so it can never be read as a flag.
+
+  **3.** "The counts" are the error, warning and note counts
+
+  The verdict carries `errors`, `warnings` and `notes`, the counts the accept and the playback need. It leaves out the per-section counts and the items in the JSON report. Step 10 can add them if the playback wants them.
+
+  **4.** The broken fixture shows why step 5 puts "Lean:" in the Question's own text
+
+  The broken plan's five findings include `unknown-key` for a `lean:` sub-line, which fails `--strict`. The clean plan keeps its lean inside its Question's text and passes.
