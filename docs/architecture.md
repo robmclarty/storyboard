@@ -104,7 +104,7 @@ A ring may import any ring below it. An edge imports only the core, never anothe
 | `index` | shell | The package's public surface | now |
 
 Build steps are the sketch's [build order](specs/initial_sketch.md#build-order-when-its-time).
-Only `cli`, `index`, `brief`, `scheduler`, `turn`, `emit` and `keyframes` exist so far; every other module is created by the step that needs it.
+Only `cli`, `index`, `brief`, `scheduler`, `turn`, `emit`, `keyframes` and `store` exist so far; every other module is created by the step that needs it.
 
 ### What each ring may do
 
@@ -172,11 +172,15 @@ In the project being planned, during the interview:
                  that wrote it, counting from 1, so the lines group into one exchange per call
   brief.md       every slot, its status and its value, rendered from the log every turn and never
                  read back
+  draft/
+    keyframes.md the latest draft, staged here because `keyframes check` reads a folder; each
+                 draft is written over the one before
 ```
 
 On acceptance, the emitted files go where their readers expect them: `keyframes.md` at the root,
 `spec.md`, `design/` and `architecture.md`, plus whatever the chosen adapters need. Nothing is
-written until the person accepts.
+written until the person accepts, and accepting never writes over a file that's already there:
+`keyframes.md` is copied from the staged draft, and refused if the project has one.
 
 ## In this repo
 

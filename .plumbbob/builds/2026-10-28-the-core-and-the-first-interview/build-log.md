@@ -13,7 +13,7 @@ step boundaries. The antidote to "my plan got lost in the noise."
 
 # Build log: The core and the first interview
 
-**Current step:** 5 — feat(emit): emit the keyframes draft and cut it for playback
+**Current step:** 6 — feat(store): keep each interview's session files on disk
 **Heavy check:** checkride (set a "check" key in .plumbbob/settings.json to override)
 
 ## Steps
@@ -27,7 +27,7 @@ check green + checkpoint taken, via `/plumbbob:verify` or `/plumbbob:build`.)*
 - ☑ 2. feat(scheduler): pick the next questions by impact × uncertainty
 - ☑ 3. feat(turn): run one pure turn from intake to accepted
 - ☑ 4. feat(keyframes): run keyframes check on a staged draft
-- ☐ 5. feat(emit): emit the keyframes draft and cut it for playback
+- ☑ 5. feat(emit): emit the keyframes draft and cut it for playback
 - ☐ 6. feat(store): keep each interview's session files on disk
 - ☐ 7. feat(lenses): write the frame and intent lenses and load them
 - ☐ 8. feat(models): reach the local and frontier models through fascicle
@@ -45,7 +45,7 @@ check green + checkpoint taken, via `/plumbbob:verify` or `/plumbbob:build`.)*
 > Capture is one line (`/plumbbob:park` composes it). Harvest happens only at the boundary.
 
 - [x] Stamp each answers.jsonl entry with the number of the storyboard turn call that wrote it, so the log stays one line per event but groups into one exchange per call (the range 1 stop's call on D11)
-- [ ] Tell the draft model keyframes' budgets (60 words an item, 7 principles, 12 constraints, 20 decisions, 12 taste, 10 open questions, 10 ideas, 2000 words), since over-budget fails --strict and the emitter doesn't trim
+- [x] Tell the draft model keyframes' budgets (60 words an item, 7 principles, 12 constraints, 20 decisions, 12 taste, 10 open questions, 10 ideas, 2000 words), since over-budget fails --strict and the emitter doesn't trim
 
 ## Harvest  *(run `/plumbbob:harvest` at each step boundary, after green)*
 
@@ -65,6 +65,8 @@ Harvest results this boundary:
 
 - 2026-10-28, at range 1 of 4's stop: 1 parked idea, classified.
 - **blocker**: park 1 · Stamp each answers.jsonl entry with the number of the storyboard turn call that wrote it, so the log stays one line per event but groups into one exchange per call (the range 1 stop's call on D11) → D11 as landed is bent, and the log format must settle before the store and the flow write it
+- 2026-10-29, at the step 5 boundary: 1 parked idea, classified.
+- **tangent**: park 2 · Tell the draft model keyframes' budgets (60 words an item, 7 principles, 12 constraints, 20 decisions, 12 taste, 10 open questions, 10 ideas, 2000 words), since over-budget fails --strict and the emitter doesn't trim → the plan isn't wrong, since step 7's rubric or step 8's draft prompt can carry the budgets inside their own seams
 
 ## Log
 
@@ -373,3 +375,57 @@ folder, so it rides the branch into the PR.)*
   **4.** The broken fixture shows why step 5 puts "Lean:" in the Question's own text
 
   The broken plan's five findings include `unknown-key` for a `lean:` sub-line, which fails `--strict`. The clean plan keeps its lean inside its Question's text and passes.
+
+- 2026-10-29 — step 5 checkpointed · e5bf98718 — feat(emit): emit the keyframes draft and cut it for playback (829m)
+
+  **Summary**: `src/emit/` writes a draft as `keyframes.md` in keyframes' usual form, and cuts it into playback chunks. The draft is the project's name, the Intent as prose, items as data, and every open slot. Each chunk holds at most one section and 30 lines and ends "What's wrong or missing?". The real `keyframes check --strict`, run through step 4's edge, passes every emitted fixture with nothing found. The run stopped at this pause because the run's grant ended with the earlier turn, so steps 6 and 7 wait for you to type `/plumbbob:run` again.
+
+  1. The emitter makes the form right by construction, and refuses only what it can't invent
+  2. An open slot with no default asks without "Lean:"
+  3. Lines wrap at 100 columns, so the 30-line chunks measure something
+  4. The cutter splits a long section between items, and repeats its heading
+  5. Budgets stay keyframes' to enforce, and I parked a note for step 8
+
+  **Readout**:
+
+  ```text
+  check        green: 10 of 10 checks
+  done-when    met
+  decisions    3 of 3 honored
+  constraints  9 of 9 honored
+  seam         held: 4 of 4 declared, no strays
+  diff         +618 -2 across 9 files
+               - docs/architecture.md +2 -2
+               - src/emit/__tests__/keyframes.test.ts +165 -0
+               - src/emit/__tests__/playback.test.ts +91 -0
+               - src/emit/__tests__/wrap.test.ts +33 -0
+               - src/emit/index.ts +3 -0
+               - src/emit/keyframes.ts +135 -0
+               - src/emit/playback.ts +69 -0
+               - and 2 more
+  spent        13h 49m · 2 turns · 4s gate · green first run
+  ```
+
+  **Verdict**: ● Plumb
+
+  **Recommendation**: Land it, then type `/plumbbob:run` to carry range 2 through steps 6 and 7. The emitter and cutter meet the done-when, and keyframes' own check passes what they write. The no-default Questions (section 2) and the 100-column wrap (section 3) are the two calls worth a look at the range's stop.
+
+  **1.** The emitter makes the form right by construction, and refuses only what it can't invent
+
+  IDs count from 1 in each section. A slug is lowercased, accents dropped, and joined by hyphens, and it gets `-2`, `-3` when another item in the plan already has it. A slug with nothing left, like `!!!`, is named for its section. What it can't make up, it refuses with a reason: a draft with no name or Intent, an item with no text, or a Decision with no `because:` (D2 (draft-as-data)). It writes no Map, no Scenarios and no pointers, and leaves out a section with no items (D5 (intent-sections)).
+
+  **2.** An open slot with no default asks without "Lean:"
+
+  Each open slot comes last among the Questions, with "Lean:" and its default at the end of its own text, never as a sub-line (D18 (open-becomes-question)). A slot that no question recommended a default for has nothing to lean to, so its Question ends at the question. That's my reading of "ends 'Lean:' and its default". The other way is to have the drafting model propose a lean, which step 10 could still do.
+
+  **3.** Lines wrap at 100 columns, so the 30-line chunks measure something
+
+  This wasn't asked for. A model writes each paragraph as one long line, and 30 such lines would be pages. So the Intent's paragraphs, each item's text and each `because:` wrap the way a hand-written plan does, under the indent keyframes reads as a continuation. A word that markdown would read as a bullet, heading, numbered item or quote never starts a line, so wrapping can't open a sub-line or end an item. The Intent keeps its paragraphs, and a leading `#` is escaped so it stays prose.
+
+  **4.** The cutter splits a long section between items, and repeats its heading
+
+  A section too long for one chunk goes over several, each under the section's heading. Cuts fall only between items or paragraphs, so a Decision stays with its `because:`. The title rides with the first chunk. Put back together, the chunks hold every line of the draft once, in order, and still check clean.
+
+  **5.** Budgets stay keyframes' to enforce, and I parked a note for step 8
+
+  The integration fixture first failed on `over-budget`: an item over 60 words fails `--strict`. That's about content, and D18 (open-becomes-question) has the playback show it, so the emitter doesn't trim. I parked P2 to give the draft model keyframes' budgets in its prompt.
