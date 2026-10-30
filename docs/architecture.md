@@ -91,7 +91,7 @@ A ring may import any ring below it. An edge imports only the core, never anothe
 | `emit` | core | The emitters: `keyframes.md` from a draft's Intent and items, in keyframes' usual form, so far, then `spec.md`, design tokens and tiles, `architecture.md`; drafts cut into playback chunks of one section and 30 lines at most | 2, 4–6 |
 | `adapters` | core | Templates over the brief for volley, plumbbob, runciter and ridgeline. Not model calls | 4 |
 | `place` | core | For an existing project, each item's placement (core, part or log) and a reason; the plan's budgets | 3 |
-| `models` | edge | The only door to a model: the local one and the frontier one, through fascicle | 2 |
+| `models` | edge | The only door to a model: one fascicle engine, Ollama for the local model and Anthropic for the frontier one, both on the native transport. Four calls, each a `model_step` with its own system prompt and zod schema: `classify` (local: intake's answers into the work's kind and size), `interpret` (answers into slot updates, each with its status), `phrase` (the scheduler's slots and their bank questions into one to four questions) and `draft` (the brief, the rubric and any findings or corrections into the Intent and items). A reply that fails its schema is refused, never guessed at | 2 |
 | `store` | edge | The only writer: `.storyboard/<slug>/` during the interview, and the accepted files after it | 1, 2 |
 | `repo` | edge | Reads a project, its docs, its decisions and the shape of its code, into a summary with sources | 3 |
 | `keyframes` | edge | The only subprocess: `keyframes check --strict --json` on each staged plan, run from storyboard's own dependency, giving the exit code, the counts and the findings, or no verdict | 2 |
@@ -104,7 +104,7 @@ A ring may import any ring below it. An edge imports only the core, never anothe
 | `index` | shell | The package's public surface | now |
 
 Build steps are the sketch's [build order](specs/initial_sketch.md#build-order-when-its-time).
-Only `cli`, `index`, `brief`, `scheduler`, `turn`, `emit`, `keyframes`, `store` and `lens` exist so far; every other module is created by the step that needs it.
+Only `cli`, `index`, `brief`, `scheduler`, `turn`, `emit`, `keyframes`, `store`, `lens` and `models` exist so far; every other module is created by the step that needs it.
 
 ### What each ring may do
 

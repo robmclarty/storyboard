@@ -11,6 +11,12 @@ importers:
       '@robmclarty/keyframes':
         specifier: 0.3.0
         version: 0.3.0
+      fascicle:
+        specifier: 0.17.2
+        version: 0.17.2(zod@4.6.7)
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@ast-grep/cli':
         specifier: 0.45.3
@@ -1015,6 +1021,55 @@ packages:
     engines: {node: '>=22'}
     hasBin: true
 
+  fascicle@0.17.2:
+    resolution: {integrity: sha512-hlvADa8wf/blbrvTK8k5kym489UDUNsA42JCXVv1pVLrVqbrTcMVW5PpoMGDn0kJRPRFm2fxYL6tOpzZOJkiag==}
+    engines: {node: '>=24.0.0'}
+    hasBin: true
+    peerDependencies:
+      '@agentclientprotocol/sdk': ^1.8.0
+      '@ai-sdk/amazon-bedrock': ^5.0.0
+      '@ai-sdk/anthropic': ^4.0.0
+      '@ai-sdk/google': ^4.0.0
+      '@ai-sdk/openai': ^4.0.0
+      '@ai-sdk/openai-compatible': ^3.0.0
+      '@ai-sdk/otel': ^1.0.0
+      '@aws-sdk/credential-providers': ^3.0.0
+      '@modelcontextprotocol/sdk': ^1.29.0
+      '@openrouter/ai-sdk-provider': ^3.0.0
+      '@opentelemetry/api': ^1.9.0
+      ai: ^7.0.0
+      ai-sdk-ollama: ^4.0.0
+      zod: ^4.2.0
+    peerDependenciesMeta:
+      '@agentclientprotocol/sdk':
+        optional: true
+      '@ai-sdk/amazon-bedrock':
+        optional: true
+      '@ai-sdk/anthropic':
+        optional: true
+      '@ai-sdk/google':
+        optional: true
+      '@ai-sdk/openai':
+        optional: true
+      '@ai-sdk/openai-compatible':
+        optional: true
+      '@ai-sdk/otel':
+        optional: true
+      '@aws-sdk/credential-providers':
+        optional: true
+      '@modelcontextprotocol/sdk':
+        optional: true
+      '@openrouter/ai-sdk-provider':
+        optional: true
+      '@opentelemetry/api':
+        optional: true
+      ai:
+        optional: true
+      ai-sdk-ollama:
+        optional: true
+      zod:
+        optional: true
+
   fast-equals@6.2.1:
     resolution: {integrity: sha512-s7KFkLPAAbIDGTh+nVYhjTiwKGvgMXAUG5vwzg8vQKj7NSRZ4eEGExBQ4rq9V90fTYVWd1cb/Wr4ffCNBmLQMQ==}
     engines: {node: '>=6.0.0'}
@@ -1559,6 +1614,9 @@ packages:
     resolution: {integrity: sha512-3NxN8+78OdzbT7C/WjGsyfPAtJaN3FNDsWxv7Y7mcDsT/oOmgW8BpyQQFFBnvZE3j9Y2Sdz1ULFLezL7Eb2yFw==}
     engines: {node: '>= 14.6'}
     hasBin: true
+
+  zod@4.6.7:
+    resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
 snapshots:
 
@@ -2304,6 +2362,10 @@ snapshots:
       '@fallow-cli/win32-x64-msvc': 3.31.0
       fallow-type-aware: 3.31.0
 
+  fascicle@0.17.2(zod@4.6.7):
+    optionalDependencies:
+      zod: 4.6.7
+
   fast-equals@6.2.1: {}
 
   fast-glob@3.3.3:
@@ -2884,3 +2946,5 @@ snapshots:
   xdg-basedir@5.1.0: {}
 
   yaml@2.9.1: {}
+
+  zod@4.6.7: {}

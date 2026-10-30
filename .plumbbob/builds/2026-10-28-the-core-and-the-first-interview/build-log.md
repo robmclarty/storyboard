@@ -13,7 +13,7 @@ step boundaries. The antidote to "my plan got lost in the noise."
 
 # Build log: The core and the first interview
 
-**Current step:** 7 — feat(lenses): write the frame and intent lenses and load them
+**Current step:** 8 — feat(models): reach the local and frontier models through fascicle
 **Heavy check:** checkride (set a "check" key in .plumbbob/settings.json to override)
 
 ## Steps
@@ -29,7 +29,7 @@ check green + checkpoint taken, via `/plumbbob:verify` or `/plumbbob:build`.)*
 - ☑ 4. feat(keyframes): run keyframes check on a staged draft
 - ☑ 5. feat(emit): emit the keyframes draft and cut it for playback
 - ☑ 6. feat(store): keep each interview's session files on disk
-- ☐ 7. feat(lenses): write the frame and intent lenses and load them
+- ☑ 7. feat(lenses): write the frame and intent lenses and load them
 - ☐ 8. feat(models): reach the local and frontier models through fascicle
 - ☐ 9. feat(flow): run intake and the asking turns through the models
 - ☐ 10. feat(draft): draft, check and play back, then write on accept
@@ -431,3 +431,76 @@ folder, so it rides the branch into the PR.)*
   The integration fixture first failed on `over-budget`: an item over 60 words fails `--strict`. That's about content, and D18 (open-becomes-question) has the playback show it, so the emitter doesn't trim. I parked P2 to give the draft model keyframes' budgets in its prompt.
 
 - 2026-10-29 — step 6 checkpointed · e711f3ddd — feat(store): keep each interview's session files on disk (2m)
+- 2026-10-29 — step 7 checkpointed · 4d14778b2 — feat(lenses): write the frame and intent lenses and load them (13m)
+- 2026-10-30 — range 2 of 4's stop recorded — review the lens content and the emitted `keyframes.md` before any model is prompted from them
+
+  **Summary**: Range 2 puts the edges and the lens content around the core, and still prompts no model. Every log line now carries the call that wrote it (step 14). `src/keyframes.ts` runs keyframes' own `check --strict` on a staged draft (step 4). `src/emit/` writes a draft as `keyframes.md` in keyframes' usual form and cuts it into playback chunks, and keyframes' check passes everything it writes (step 5). `src/store.ts` writes the session's own files and nothing else until accept (step 6). `lenses/frame/` and `lenses/intent/` hold the slots, question banks and rubrics that `src/lens.ts` loads and checks (step 7).
+
+  1. Step 14 landed a hair off its seam, with one test line outside it
+  2. The intent lens asks before the frame's follow-ups, which is D13 working as written
+  3. Every question after intake recommends an answer, and seven of them are open
+  4. An emitted keyframes.md reads like a hand-written one, and keyframes' check passes it
+  5. The store writes only the session's own files, and refuses rather than creates
+
+  **Readout**:
+
+  ```text
+  steps        5 of 5 landed
+               - 14 159a9ab · 4 ebc5512 · 5 e5bf987 · 6 e711f3d · 7 4d14778
+  check        green: 10 of 10 checks, 5 landings
+  done-when    met
+  decisions    honored
+               - D2 (draft-as-data)
+               - D3 (staged-draft)
+               - D5 (intent-sections)
+               - D6 (frame-and-intent)
+               - D8 (three-deps)
+               - D11 (log-is-truth)
+               - D12 (slots-in-lenses)
+               - D16 (model-sets-status)
+               - D18 (open-becomes-question)
+  constraints  9 of 9 honored
+  seam         strayed: 1 path outside step 14's seam
+               → src/__tests__/scheduler.test.ts
+  diff         +2805 -139 across 37 files
+               - docs/architecture.md +16 -10
+               - lenses/README.md +58 -9
+               - lenses/frame/SKILL.md +56 -0
+               - lenses/frame/questions.md +127 -0
+               - lenses/frame/rubric.md +39 -0
+               - lenses/intent/SKILL.md +53 -0
+               - lenses/intent/questions.md +99 -0
+               - and 30 more
+  spent        14h 14m · green first run at every landing · 1 drift warning
+  ```
+
+  **Verdict**: ◐ A hair off (seam strayed)
+
+  **Recommendation**: Approve the review as it stands, keeping the intent-first order (section 2) and the seven open follow-ups (section 3). Both are content or scheduling calls that cost little to change, and the live redraft at range 3's stop is the first real evidence on either. Read the two `questions.md` files before you type the next run, since step 8's prompts are built from them and a wording is cheapest to change now.
+
+  **1.** Step 14 landed a hair off its seam, with one test line outside it
+
+  `src/__tests__/scheduler.test.ts` builds an asked entry by hand, so it gained `call: 1`, which the type now requires. The call and the chunk index also share one reader now, so a bad chunk's message reads "isn't a whole number from 0". Neither changes behavior. Steps 4 to 7 held their seams. Step 7's first gate run failed on lint, for two helpers that belonged at the module's top level, and went green once they moved.
+
+  **2.** The intent lens asks before the frame's follow-ups, which is D13 working as written
+
+  The lenses give each slot an impact from 1 to 3, and D13 (fixed-weights) counts a Partial slot at half of it. Intake usually leaves the frame's slots Partial, so an impact-3 frame slot scores 1.5. An intent slot nobody has asked about scores its full impact, which is 3 for principles and decisions. So the first round after intake goes to the intent lens: principles, decisions, constraints and taste. The next round gives intent its fifth question, and only then do the frame's two remaining questions go to its vaguest slots. `lenses/frame/SKILL.md` says so plainly.
+
+  If you'd rather the frame finish first, the cheap fix D13 names is a prerequisite: the intent lens waits until the frame's impact-3 slots are at least Partial. That's a scheduler change, not a lens edit. I'd leave it until the live redraft shows whether the order hurts.
+
+  **3.** Every question after intake recommends an answer, and seven of them are open
+
+  The banks hold intake's three and 23 follow-ups: 16 menus and 7 open questions. The open ones are where a short list of options would steer: what people do today, what's already decided, what it should never feel like, and what's for later. Each one still recommends an answer, as the done-when asks. My reading of C8 (broad-then-narrow) is that "early questions are open" covers a slot's first, broad question, and "each bank question says which kind it is" allows both kinds after intake. If you read C8 as menus only after intake, the seven become menus, a content edit in `questions.md` and nothing else.
+
+  A recommendation is a seed the phrase step adapts. On a question about the person's world, it's the likeliest answer, for them to confirm. On a call, it's the safest default, the one that commits the plan to the least, such as "None beyond the no-gos" or "Nothing is settled yet". The intent rubric also carries keyframes' budgets, which were park 2.
+
+  **4.** An emitted keyframes.md reads like a hand-written one, and keyframes' check passes it
+
+  For this card I wrote a small draft by hand and ran it through the built emitter. The real `keyframes check --strict` reports nothing on it, and it cuts into 7 playback chunks:
+
+  ```markdown
+  # inkwell
+
+  **5.** The store writes only the session's own files, and refuses rather than creates
+
+  The store's tests list the temp project after every call, and nothing appears but `.storyboard/<slug>/` and, on accept, `keyframes.md`. Loading a new session writes nothing. A project folder that isn't there is refused rather than created, and so is a slug with a slash or `..`. Accepting copies with an exclusive create, so it can't write over a `keyframes.md`, even one that appeared since the draft was checked. The slug check is otherwise loose: any one name, spaces and capitals included, so step 11's default from the project folder's name works whatever the folder is called.
