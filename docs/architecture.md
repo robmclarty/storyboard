@@ -159,9 +159,12 @@ Both stay thin, and neither holds state of its own.
   one turn, so both front ends drive the same command and a session moves between them by its
   files alone. The ACP server for Zed will be `src/acp.ts`, over fascicle's.
 - **The Claude Code plugin** is `.claude-plugin/plugin.json` and
-  [`skills/storyboard/`](../skills/storyboard/SKILL.md). The skill asks, with
-  `AskUserQuestion` and previews, and the CLI runs each turn. It ships in the same npm package,
-  as plumbbob's does.
+  [`skills/storyboard/`](../skills/storyboard/SKILL.md). The skill runs `storyboard turn
+  --json` for each turn and asks what it shows: `AskUserQuestion` for the menus, plain chat for
+  intake's open questions, every question word for word and every answer sent back the same way.
+  Design questions will carry previews. Its table of the JSON's kinds is pinned by
+  `test/contract/turn-json.test.ts`, which drives real turns and holds each object to it. It
+  ships in the same npm package, as plumbbob's does.
 
 ## On disk
 

@@ -13,7 +13,7 @@ step boundaries. The antidote to "my plan got lost in the noise."
 
 # Build log: The core and the first interview
 
-**Current step:** 11 — feat(cli): run one interview turn from the command line
+**Current step:** 12 — feat(front): drive the first interview from the Claude Code skill
 **Heavy check:** checkride (set a "check" key in .plumbbob/settings.json to override)
 
 ## Steps
@@ -33,7 +33,7 @@ check green + checkpoint taken, via `/plumbbob:verify` or `/plumbbob:build`.)*
 - ☑ 8. feat(models): reach the local and frontier models through fascicle
 - ☑ 9. feat(flow): run intake and the asking turns through the models
 - ☑ 10. feat(draft): draft, check and play back, then write on accept
-- ☐ 11. feat(cli): run one interview turn from the command line
+- ☑ 11. feat(cli): run one interview turn from the command line
 - ☐ 12. feat(front): drive the first interview from the Claude Code skill
 - ☐ 13. docs(research): record the keyframes redraft against the original
 - ☑ 14. feat(brief): stamp each log entry with the call that wrote it
@@ -509,3 +509,4 @@ folder, so it rides the branch into the PR.)*
 - 2026-10-30 — step 8 checkpointed · 2a6042b7c — feat(models): reach the local and frontier models through fascicle (9m)
 - 2026-10-30 — step 9 checkpointed · efd6be9f5 — feat(flow): run intake and the asking turns through the models (5m)
 - 2026-10-30 — step 10 checkpointed · d3b3606ab — feat(draft): draft, check and play back, then write on accept (1 drift, 6m)
+- 2026-10-30 — step 11 checkpointed · 8149f04b6 — feat(cli): run one interview turn from the command line (3m)

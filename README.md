@@ -28,7 +28,14 @@ interview has been run yet, so the system prompts are first drafts.
 
 ## Running an interview
 
-`storyboard turn` runs one turn of the interview and stops where it's your turn. Run it in the
+The easiest way is from Claude Code. Put `storyboard` on your PATH (from this repo, `pnpm build`
+then `pnpm link --global`), load the plugin with `claude --plugin-dir <this repo>`, set the four
+settings below, and in the project's folder type `/storyboard:storyboard`. The skill asks each
+question as it's given, with `AskUserQuestion` for the menus and intake's open questions in plain
+chat, sends your answers back word for word, and plays the draft back a chunk at a time. It never
+answers for you. Typing the command again picks the session up where it stopped.
+
+From a terminal, `storyboard turn` runs one turn of the interview and stops where it's your turn. Run it in the
 project's folder, or name one with `--dir`. The session's files go in `.storyboard/<slug>/`, and
 the slug is the folder's name unless you give one.
 
