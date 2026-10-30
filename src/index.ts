@@ -1,2 +1,2 @@
-export { run } from './cli.js';
-export type { Io } from './cli.js';
+export { live, run } from './cli.js';
+export type { Io, Shell } from './cli.js';

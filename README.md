@@ -16,13 +16,44 @@ In animation, storyboards come before keyframes, and they're drawn broad before 
 
 ## Status
 
-Not built yet. This repo holds the container for the first build: the layout, the rules that
-hold it, and the gate that says when a change is done. The `storyboard` command answers only
-`--help` and `--version` for now.
+The first interview runs end to end, from the command line, for a new project: intake's three
+open questions, the frame and intent lenses, a drafted `keyframes.md` played back a chunk at a
+time, and an accept that writes it only when `keyframes check --strict` passes. Existing
+projects, the behavior, design and architecture lenses, and `spec.md` come later. No live
+interview has been run yet, so the system prompts are first drafts.
 
 - [The sketch](docs/specs/initial_sketch.md) is the idea, the reasoning behind it, and the build
   order.
 - [The architecture](docs/architecture.md) is the map the build fills.
+
+## Running an interview
+
+`storyboard turn` runs one turn of the interview and stops where it's your turn. Run it in the
+project's folder, or name one with `--dir`. The session's files go in `.storyboard/<slug>/`, and
+the slug is the folder's name unless you give one.
+
+It needs a local model on Ollama and Anthropic's API:
+
+```bash
+export STORYBOARD_LOCAL_MODEL=qwen3.6:35b
+export OLLAMA_HOST=mini.local
+export STORYBOARD_FRONTIER_MODEL=claude-opus-5-5
+export ANTHROPIC_API_KEY=…
+```
+
+The first call asks intake's three questions. Each later call takes your answers on stdin, as a
+JSON object keyed by the ids it showed, and shows the next round:
+
+```bash
+storyboard turn
+echo '{"intake-1": "A notes app, for me alone.", "intake-2": "…", "intake-3": "…"}' | storyboard turn
+```
+
+When nothing is worth asking, or you pass `--done`, it drafts `keyframes.md` and plays it back a
+chunk at a time. Reply under the chunk's id: a blank reply passes it, and anything else corrects
+it. Corrections are redrafted after the last chunk, and only the chunks that changed come back.
+Once a playback ends with nothing corrected, `storyboard turn --accept` writes `keyframes.md` to
+the project, and never over one that's there. `--json` prints each turn as JSON, for a front end.
 
 ## How it will work
 

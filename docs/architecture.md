@@ -99,7 +99,7 @@ A ring may import any ring below it. An edge imports only the core, never anothe
 | `lens` | wiring | Loads a lens from [`lenses/`](../lenses/README.md): its slots, what makes each one Clear, its question bank and its drafting rubric, refusing a lens that doesn't read with its file and line | 2 |
 | `draft` | wiring | Drafts every artifact from the brief: so far `keyframes.md`, drafted through `models`, emitted, staged and checked, sent back once with what the check found when it fails, and cut into playback chunks with whatever still fails as a chunk of its own. On accept it checks the staged draft again and copies it only when it's clean. Later, it samples competing drafts to find what to ask | 2, 7 |
 | `flow` | wiring | One `storyboard turn` call: it loads the session, takes what the person said (answers, read into slot updates through `interpret`, or a reply to a chunk of the draft, which passes it when blank and otherwise is a correction read the same way), then carries out what a model can (intake's questions, the classification, the next round phrased, the draft) until it's the person's turn. Each entry is appended as the core takes it, and `brief.md` is rendered at the end. An accept writes `keyframes.md` only when the playback ended with nothing corrected and the check is clean. A call is a straight line, so it awaits each step rather than composing fascicle's primitives, and a session spans calls through its files, not fascicle's `suspend` | 2 |
-| `cli` | shell | The `storyboard` command, which the bin runs | now |
+| `cli` | shell | The `storyboard` command, which the bin runs: `storyboard turn [slug] [--dir <project>] [--json] [--done] [--accept]` runs one turn of the interview, its answers on stdin as JSON keyed by id, and prints what comes next as text or JSON. It reads the four model settings from the environment and takes the models as an argument, which the bin gives as the real ones | now, 2 |
 | `acp` | shell | The ACP server for Zed, over fascicle's | after the CLI |
 | `index` | shell | The package's public surface | now |
 
@@ -154,7 +154,10 @@ than working around a rule.
 Both stay thin, and neither holds state of its own.
 
 - **The CLI** is `bin/storyboard.js`, which runs `src/cli.ts`. That returns an exit code and
-  never exits the process itself. The ACP server for Zed will be `src/acp.ts`, over fascicle's.
+  never exits the process itself: 0 for a turn that ran, 1 for an accept the check refused, and 2
+  for a usage problem, a missing setting or a turn that can't go on. Each `storyboard turn` is
+  one turn, so both front ends drive the same command and a session moves between them by its
+  files alone. The ACP server for Zed will be `src/acp.ts`, over fascicle's.
 - **The Claude Code plugin** is `.claude-plugin/plugin.json` and
   [`skills/storyboard/`](../skills/storyboard/SKILL.md). The skill asks, with
   `AskUserQuestion` and previews, and the CLI runs each turn. It ships in the same npm package,
