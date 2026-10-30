@@ -179,8 +179,10 @@ describe('brief.md', () => {
 
 describe('the staged draft (D3 (staged-draft))', () => {
   test('is written to draft/keyframes.md, over the one before, and its folder is given', async () => {
+    expect(store.staged).toBe(join(project, '.storyboard/inkwell/draft'));
+    expect(await listing()).toEqual([]);
     const dir = valueOf(await store.stage('# first\n'));
-    expect(dir).toBe(join(project, '.storyboard/inkwell/draft'));
+    expect(dir).toBe(store.staged);
     valueOf(await store.stage(DRAFT));
     expect(await read('.storyboard/inkwell/draft/keyframes.md')).toBe(DRAFT);
     expect(await listing()).toEqual([...SESSION_DIR, '.storyboard/inkwell/draft', '.storyboard/inkwell/draft/keyframes.md']);

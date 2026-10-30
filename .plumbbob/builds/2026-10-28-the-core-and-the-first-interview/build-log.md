@@ -13,7 +13,7 @@ step boundaries. The antidote to "my plan got lost in the noise."
 
 # Build log: The core and the first interview
 
-**Current step:** 9 — feat(flow): run intake and the asking turns through the models
+**Current step:** 10 — feat(draft): draft, check and play back, then write on accept
 **Heavy check:** checkride (set a "check" key in .plumbbob/settings.json to override)
 
 ## Steps
@@ -31,7 +31,7 @@ check green + checkpoint taken, via `/plumbbob:verify` or `/plumbbob:build`.)*
 - ☑ 6. feat(store): keep each interview's session files on disk
 - ☑ 7. feat(lenses): write the frame and intent lenses and load them
 - ☑ 8. feat(models): reach the local and frontier models through fascicle
-- ☐ 9. feat(flow): run intake and the asking turns through the models
+- ☑ 9. feat(flow): run intake and the asking turns through the models
 - ☐ 10. feat(draft): draft, check and play back, then write on accept
 - ☐ 11. feat(cli): run one interview turn from the command line
 - ☐ 12. feat(front): drive the first interview from the Claude Code skill
@@ -500,9 +500,11 @@ folder, so it rides the branch into the PR.)*
 
   ```markdown
   # inkwell
+  ```
 
   **5.** The store writes only the session's own files, and refuses rather than creates
 
   The store's tests list the temp project after every call, and nothing appears but `.storyboard/<slug>/` and, on accept, `keyframes.md`. Loading a new session writes nothing. A project folder that isn't there is refused rather than created, and so is a slug with a slash or `..`. Accepting copies with an exclusive create, so it can't write over a `keyframes.md`, even one that appeared since the draft was checked. The slug check is otherwise loose: any one name, spaces and capitals included, so step 11's default from the project folder's name works whatever the folder is called.
 
 - 2026-10-30 — step 8 checkpointed · 2a6042b7c — feat(models): reach the local and frontier models through fascicle (9m)
+- 2026-10-30 — step 9 checkpointed · efd6be9f5 — feat(flow): run intake and the asking turns through the models (5m)

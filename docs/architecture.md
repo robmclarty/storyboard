@@ -97,14 +97,14 @@ A ring may import any ring below it. An edge imports only the core, never anothe
 | `keyframes` | edge | The only subprocess: `keyframes check --strict --json` on each staged plan, run from storyboard's own dependency, giving the exit code, the counts and the findings, or no verdict | 2 |
 | `intake` | wiring | The first lens's three open questions, then their answers sent to the local model for the work's kind and size, which decide the lenses and the ceremony. So far only a tiny size changes what happens: it ends the session with no planner | 2 |
 | `lens` | wiring | Loads a lens from [`lenses/`](../lenses/README.md): its slots, what makes each one Clear, its question bank and its drafting rubric, refusing a lens that doesn't read with its file and line | 2 |
-| `draft` | wiring | Drafts every artifact from the brief; later, samples competing drafts to find what to ask | 2, 7 |
-| `flow` | wiring | One `storyboard turn` call: it loads the session, reads the person's answers into slot updates through `interpret`, then carries out what a model can (intake's questions, the classification, the next round phrased) until it's the person's turn. Each entry is appended as the core takes it, and `brief.md` is rendered at the end. A call is a straight line, so it awaits each step rather than composing fascicle's primitives, and a session spans calls through its files, not fascicle's `suspend` | 2 |
+| `draft` | wiring | Drafts every artifact from the brief: so far `keyframes.md`, drafted through `models`, emitted, staged and checked, sent back once with what the check found when it fails, and cut into playback chunks with whatever still fails as a chunk of its own. On accept it checks the staged draft again and copies it only when it's clean. Later, it samples competing drafts to find what to ask | 2, 7 |
+| `flow` | wiring | One `storyboard turn` call: it loads the session, takes what the person said (answers, read into slot updates through `interpret`, or a reply to a chunk of the draft, which passes it when blank and otherwise is a correction read the same way), then carries out what a model can (intake's questions, the classification, the next round phrased, the draft) until it's the person's turn. Each entry is appended as the core takes it, and `brief.md` is rendered at the end. An accept writes `keyframes.md` only when the playback ended with nothing corrected and the check is clean. A call is a straight line, so it awaits each step rather than composing fascicle's primitives, and a session spans calls through its files, not fascicle's `suspend` | 2 |
 | `cli` | shell | The `storyboard` command, which the bin runs | now |
 | `acp` | shell | The ACP server for Zed, over fascicle's | after the CLI |
 | `index` | shell | The package's public surface | now |
 
 Build steps are the sketch's [build order](specs/initial_sketch.md#build-order-when-its-time).
-Only `cli`, `index`, `brief`, `scheduler`, `turn`, `emit`, `keyframes`, `store`, `lens`, `models`, `intake` and `flow` exist so far; every other module is created by the step that needs it.
+Only `cli`, `index`, `brief`, `scheduler`, `turn`, `emit`, `keyframes`, `store`, `lens`, `models`, `intake`, `draft` and `flow` exist so far; every other module is created by the step that needs it.
 
 ### What each ring may do
 

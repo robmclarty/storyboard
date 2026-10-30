@@ -25,6 +25,8 @@ export type Store = {
    * `keyframes check`, which reads a folder (D3 (staged-draft)).
    */
   readonly stage: (text: string) => Promise<Read<string>>;
+  /** The folder a draft is staged in, as `stage` gives it, so a later call can check what's there. It writes nothing. */
+  readonly staged: string;
   /** Copies the staged draft to the project's `keyframes.md`, and gives its path. */
   readonly accept: () => Promise<Read<string>>;
 };
@@ -105,6 +107,7 @@ export const openStore = (project: string, slug: string): Read<Store> => {
         await writeFile(join(draft, PLAN), text);
         return { ok: true, value: draft };
       },
+      staged: draft,
       accept: async () => {
         const target = join(project, PLAN);
         try {

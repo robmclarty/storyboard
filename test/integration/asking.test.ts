@@ -50,7 +50,7 @@ describe('an interview from intake through two intent rounds', () => {
 
   /** Runs one call with these answers, and keeps what it showed. */
   const call = async (answers: Readonly<Record<string, string>> = {}): Promise<void> => {
-    shown.push(valueOf(await runTurn({ models, now: () => AT }, { project, slug: 'inkwell', answers, done: false })));
+    shown.push(valueOf(await runTurn({ models, now: () => AT }, { project, slug: 'inkwell', answers, done: false, accept: false })));
   };
 
   /** The session's log, as it's stored. */
@@ -180,7 +180,7 @@ describe('a call that stops short', () => {
 
   /** Runs one call of the session "inkwell" with the fake `models`. */
   const call = (models: FakeModels, request: Partial<Omit<Request, 'project' | 'slug'>> = {}): Promise<Read<Shown>> =>
-    runTurn({ models, now: () => AT }, { project, slug: 'inkwell', answers: {}, done: false, ...request });
+    runTurn({ models, now: () => AT }, { project, slug: 'inkwell', answers: {}, done: false, accept: false, ...request });
 
   /** The session's log as it's stored, or none before its first write. */
   const log = async (): Promise<readonly Entry[]> =>
@@ -232,12 +232,13 @@ describe('a call that stops short', () => {
     expect(await kinds()).toEqual(['asked']);
   });
 
-  test('takes "done" at the first round it can, and asks nothing more', async () => {
+  test('takes "done" at the first round it can, asks nothing more, and drafts', async () => {
     const models = fakeModels();
     await call(models);
-    await call(models, { answers: INTAKE, done: true });
-    expect(await kinds()).toEqual(['asked', 'answered', 'classified', 'done']);
+    const shown = await call(models, { answers: INTAKE, done: true });
+    expect(await kinds()).toEqual(['asked', 'answered', 'classified', 'done', 'drafted']);
     expect(models.calls.phrase).toEqual([]);
+    expect(shown.ok && shown.value.kind).toBe('chunk');
   });
 
   test('keeps nothing of answers the model could not read, so the same answers can be sent again', async () => {
